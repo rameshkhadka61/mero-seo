@@ -117,6 +117,15 @@ class Plugin {
 
             $titles_settings = new \ESEO\Modules\TitlesMeta\Settings();
             $titles_settings->init();
+
+            $schema_settings = new \ESEO\Modules\Schema\Settings();
+            $schema_settings->init();
+        }
+
+        // Schema Engine should run on frontend
+        if ( ! is_admin() ) {
+            $schema_engine = new \ESEO\Modules\Schema\Schema();
+            $schema_engine->init();
         }
     }
 

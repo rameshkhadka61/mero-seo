@@ -76,6 +76,16 @@ class Menu {
             'eseo-titles-meta',
             [ $titles_settings, 'render_settings_page' ]
         );
+
+        $schema_settings = new \ESEO\Modules\Schema\Settings();
+        add_submenu_page(
+            'enterprise-seo',
+            'Schema Settings',
+            'Schema Settings',
+            'manage_options',
+            'eseo-schema',
+            [ $schema_settings, 'render_settings_page' ]
+        );
     }
 
     public function register_settings() {
