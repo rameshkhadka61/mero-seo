@@ -39,8 +39,22 @@ class AiSEO {
             $prompt = "Act as an expert SEO researcher. Based on the following post title: '{$post_title}', suggest the single most effective Focus Keyword. The keyword should ideally have high search volume intent. Return ONLY the keyword text (1 to 4 words maximum), nothing else.";
         }
 
-        // Determine Engine
-        $engine = ! empty( $openai_key ) ? 'openai' : 'gemini';
+        // Determine Engine based on power and relevance if both keys are present
+        $engine = '';
+        if ( ! empty( $openai_key ) && ! empty( $gemini_key ) ) {
+            // Both keys exist: Route to the most relevant engine
+            if ( $type === 'keyword' ) {
+                // Gemini is better at search intent and Google-related research
+                $engine = 'gemini';
+            } else {
+                // OpenAI is better at strict character-limit copywriting
+                $engine = 'openai';
+            }
+        } elseif ( ! empty( $openai_key ) ) {
+            $engine = 'openai';
+        } else {
+            $engine = 'gemini';
+        }
         
         if ( $engine === 'openai' ) {
             $response = wp_remote_post( 'https://api.openai.com/v1/chat/completions', [
