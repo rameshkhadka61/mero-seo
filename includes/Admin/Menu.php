@@ -98,41 +98,440 @@ class Menu {
             set_transient( 'eseo_dashboard_links_count', $total_links, 12 * HOUR_IN_SECONDS );
         }
 
+        // Calculate SEO Scores
+        $seo_scores = get_transient( 'eseo_dashboard_scores' );
+        if ( false === $seo_scores ) {
+            $seo_scores = [ 'good' => 0, 'ok' => 0, 'needs_improvement' => 0, 'not_analyzed' => 0 ];
+            $total_posts = (int) $wpdb->get_var( "SELECT COUNT(ID) FROM {$wpdb->posts} WHERE post_status = 'publish' AND post_type NOT IN ('revision', 'nav_menu_item', 'attachment')" );
+            
+            $meta_data = $wpdb->get_results( "
+                SELECT post_id, meta_key 
+                FROM {$wpdb->postmeta} 
+                WHERE meta_key IN ('_eseo_meta_title', '_eseo_meta_description', '_eseo_focus_keyword') 
+                AND meta_value != ''
+            " );
+            
+            $post_scores = [];
+            foreach ( $meta_data as $row ) {
+                if ( ! isset( $post_scores[ $row->post_id ] ) ) {
+                    $post_scores[ $row->post_id ] = 0;
+                }
+                $post_scores[ $row->post_id ]++;
+            }
+
+            foreach ( $post_scores as $post_id => $score ) {
+                if ( $score == 3 ) $seo_scores['good']++;
+                elseif ( $score == 2 ) $seo_scores['ok']++;
+                else $seo_scores['needs_improvement']++;
+            }
+
+            $analyzed_count = count( $post_scores );
+            $seo_scores['not_analyzed'] = max( 0, $total_posts - $analyzed_count );
+            
+            set_transient( 'eseo_dashboard_scores', $seo_scores, 12 * HOUR_IN_SECONDS );
+        }
+
         ?>
-        <div class="wrap" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen-Sans,Ubuntu,Cantarell,'Helvetica Neue',sans-serif;">
-            <h1>Mero Afno Premium SEO Dashboard</h1>
-            <p>Welcome to your site's SEO control center.</p>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <style>
+            .eseo-wrap {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                margin: 20px 20px 0 0;
+            }
+            .eseo-header {
+                margin-bottom: 25px;
+            }
+            .eseo-header h1 {
+                font-size: 24px;
+                font-weight: 600;
+                color: #1d2327;
+                margin: 0 0 5px 0;
+            }
+            .eseo-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+                margin-bottom: 20px;
+            }
+            .eseo-card {
+                background: #fff;
+                border: 1px solid #e2e4e7;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+                padding: 24px;
+                box-sizing: border-box;
+            }
+            .eseo-card h2 {
+                font-size: 16px;
+                font-weight: 600;
+                margin: 0 0 20px 0;
+                color: #1d2327;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .eseo-card h2 .info-icon {
+                color: #a7aaad;
+                font-weight: normal;
+                cursor: pointer;
+            }
+            /* 2x2 Metric Grid inside Card */
+            .eseo-metric-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+            }
+            .eseo-metric {
+                text-align: center;
+                padding: 15px;
+                position: relative;
+            }
+            .eseo-metric:nth-child(1) { border-right: 1px solid #e2e4e7; border-bottom: 1px solid #e2e4e7; }
+            .eseo-metric:nth-child(2) { border-bottom: 1px solid #e2e4e7; }
+            .eseo-metric:nth-child(3) { border-right: 1px solid #e2e4e7; }
+            
+            .eseo-metric-value {
+                font-size: 28px;
+                font-weight: 700;
+                color: #101517;
+                margin-bottom: 5px;
+            }
+            .eseo-metric-label {
+                font-size: 13px;
+                color: #50575e;
+                margin-bottom: 5px;
+            }
+            .eseo-metric-trend {
+                font-size: 12px;
+                font-weight: 600;
+                color: #00a32a;
+            }
+            
+            /* Table Styles */
+            .eseo-table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 13px;
+            }
+            .eseo-table th {
+                text-align: left;
+                padding: 10px 5px;
+                color: #1d2327;
+                font-weight: 600;
+                border-bottom: 1px solid #e2e4e7;
+            }
+            .eseo-table td {
+                padding: 12px 5px;
+                color: #50575e;
+                border-bottom: 1px solid #f0f0f1;
+            }
+            .eseo-table tr:last-child td {
+                border-bottom: none;
+            }
+            
+            /* SEO Scores specific */
+            .eseo-scores-container {
+                display: flex;
+                align-items: center;
+                gap: 40px;
+            }
+            .eseo-scores-list {
+                flex: 1;
+                list-style: none;
+                margin: 0;
+                padding: 0;
+            }
+            .eseo-scores-list li {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 10px 0;
+                border-bottom: 1px solid #f0f0f1;
+            }
+            .eseo-scores-list li:last-child {
+                border-bottom: none;
+            }
+            .eseo-score-label {
+                display: flex;
+                align-items: center;
+                font-weight: 500;
+                color: #1d2327;
+            }
+            .eseo-score-dot {
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                margin-right: 10px;
+            }
+            .eseo-score-count {
+                background: #e2e4e7;
+                padding: 2px 8px;
+                border-radius: 12px;
+                font-size: 12px;
+                font-weight: 600;
+                margin-left: 10px;
+            }
+            .eseo-score-view {
+                border: 1px solid #ccd0d4;
+                background: #f8f9fa;
+                padding: 4px 10px;
+                border-radius: 4px;
+                font-size: 12px;
+                text-decoration: none;
+                color: #1d2327;
+            }
+            .eseo-score-view:hover {
+                background: #fff;
+            }
+            .eseo-chart-container {
+                width: 180px;
+                height: 180px;
+                position: relative;
+            }
+        </style>
 
-            <div class="eseo-dashboard-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:20px; margin-top:20px;">
-                
-                <div class="eseo-card" style="background:#fff; border:1px solid #ccd0d4; border-radius:6px; padding:20px;">
-                    <h2 style="margin-top:0; border-bottom:1px solid #f0f0f1; padding-bottom:10px;">Traffic Saved</h2>
-                    <div class="eseo-stat" style="font-size:32px; font-weight:bold; color:#0a4b78; margin:10px 0;">
-                        <?php echo number_format_i18n( (int) $total_redirects ); ?>
-                    </div>
-                    <p class="description">404 errors successfully intercepted and redirected.</p>
-                </div>
-
-                <div class="eseo-card" style="background:#fff; border:1px solid #ccd0d4; border-radius:6px; padding:20px;">
-                    <h2 style="margin-top:0; border-bottom:1px solid #f0f0f1; padding-bottom:10px;">Content Links Audited</h2>
-                    <div class="eseo-stat" style="font-size:32px; font-weight:bold; color:#00a32a; margin:10px 0;">
-                        <?php echo number_format_i18n( (int) $total_links ); ?>
-                    </div>
-                    <p class="description">Internal and external links being monitored.</p>
-                </div>
-
-                <div class="eseo-card" style="background:#fff; border:1px solid #ccd0d4; border-radius:6px; padding:20px;">
-                    <h2 style="margin-top:0; border-bottom:1px solid #f0f0f1; padding-bottom:10px;">System Status</h2>
-                    <ul style="list-style-type:none; padding-left:0; margin-bottom:0;">
-                        <li style="margin-bottom:8px;">✅ Sitemap Generator (Cached)</li>
-                        <li style="margin-bottom:8px;">✅ JSON-LD Article Schema</li>
-                        <li style="margin-bottom:8px;">✅ Background Content Audit</li>
-                        <li style="margin-bottom:0;">✅ Performance Optimization</li>
-                    </ul>
-                </div>
-
+        <div class="eseo-wrap">
+            <div class="eseo-header">
+                <h1>Mero Afno Premium SEO Dashboard</h1>
+                <p style="color: #50575e; margin: 0;">Monitor your search performance and site health.</p>
             </div>
+
+            <div class="eseo-grid">
+                <!-- Metrics Card -->
+                <div class="eseo-card">
+                    <h2>Search Performance (Mock Data) <span class="info-icon">ⓘ</span></h2>
+                    <div class="eseo-metric-grid">
+                        <div class="eseo-metric">
+                            <div class="eseo-metric-value">18</div>
+                            <div class="eseo-metric-label">Impressions</div>
+                            <div class="eseo-metric-trend">+100.00%</div>
+                        </div>
+                        <div class="eseo-metric">
+                            <div class="eseo-metric-value">2</div>
+                            <div class="eseo-metric-label">Clicks</div>
+                            <div class="eseo-metric-trend">+100.00%</div>
+                        </div>
+                        <div class="eseo-metric">
+                            <div class="eseo-metric-value">11.11%</div>
+                            <div class="eseo-metric-label">Average CTR</div>
+                        </div>
+                        <div class="eseo-metric">
+                            <div class="eseo-metric-value">14.83</div>
+                            <div class="eseo-metric-label">Average position</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sessions Chart Card -->
+                <div class="eseo-card">
+                    <h2>Organic sessions (Mock Data) <span class="info-icon">ⓘ</span></h2>
+                    <div style="font-size: 24px; font-weight: bold; margin-bottom: 5px;">16</div>
+                    <div style="font-size: 12px; color: #50575e; margin-bottom: 15px;">Last 28 days</div>
+                    <div style="height: 150px;">
+                        <canvas id="organicSessionsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="eseo-grid">
+                <!-- Top Content Card -->
+                <div class="eseo-card">
+                    <h2>Top 5 most popular content (Mock Data) <span class="info-icon">ⓘ</span></h2>
+                    <table class="eseo-table">
+                        <thead>
+                            <tr>
+                                <th>Landing page</th>
+                                <th style="text-align:right;">Clicks</th>
+                                <th style="text-align:right;">Impressions</th>
+                                <th style="text-align:right;">CTR</th>
+                                <th style="text-align:right;">Position</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>/</td>
+                                <td style="text-align:right;">1</td>
+                                <td style="text-align:right;">1</td>
+                                <td style="text-align:right;">100.00%</td>
+                                <td style="text-align:right;">1.00</td>
+                            </tr>
+                            <tr>
+                                <td>/country/brunei-darussalam/</td>
+                                <td style="text-align:right;">1</td>
+                                <td style="text-align:right;">1</td>
+                                <td style="text-align:right;">100.00%</td>
+                                <td style="text-align:right;">10.00</td>
+                            </tr>
+                            <tr>
+                                <td>/country/cote-divoire/</td>
+                                <td style="text-align:right;">0</td>
+                                <td style="text-align:right;">2</td>
+                                <td style="text-align:right;">0.00%</td>
+                                <td style="text-align:right;">8.00</td>
+                            </tr>
+                            <tr>
+                                <td>/country/dominica/</td>
+                                <td style="text-align:right;">0</td>
+                                <td style="text-align:right;">2</td>
+                                <td style="text-align:right;">0.00%</td>
+                                <td style="text-align:right;">6.00</td>
+                            </tr>
+                            <tr>
+                                <td>/radio_station/gumbo-94-9-fm/</td>
+                                <td style="text-align:right;">0</td>
+                                <td style="text-align:right;">12</td>
+                                <td style="text-align:right;">0.00%</td>
+                                <td style="text-align:right;">18.42</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Top Queries Card -->
+                <div class="eseo-card">
+                    <h2>Top 5 search queries (Mock Data) <span class="info-icon">ⓘ</span></h2>
+                    <table class="eseo-table">
+                        <thead>
+                            <tr>
+                                <th>Query</th>
+                                <th style="text-align:right;">Clicks</th>
+                                <th style="text-align:right;">Impressions</th>
+                                <th style="text-align:right;">CTR</th>
+                                <th style="text-align:right;">Position</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>94.9 gumbo</td>
+                                <td style="text-align:right;">0</td>
+                                <td style="text-align:right;">1</td>
+                                <td style="text-align:right;">0.00%</td>
+                                <td style="text-align:right;">43.00</td>
+                            </tr>
+                            <tr>
+                                <td>94.9 radio live</td>
+                                <td style="text-align:right;">0</td>
+                                <td style="text-align:right;">1</td>
+                                <td style="text-align:right;">0.00%</td>
+                                <td style="text-align:right;">63.00</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="eseo-grid" style="grid-template-columns: 1fr;">
+                <!-- Real SEO Scores Card -->
+                <div class="eseo-card">
+                    <h2>SEO scores (Real Data)</h2>
+                    <p style="color:#50575e; font-size:13px;">This analyzes the presence of your SEO Title, Meta Description, and Focus Keyword across all published content.</p>
+                    <div class="eseo-scores-container" style="margin-top:20px;">
+                        <ul class="eseo-scores-list">
+                            <li>
+                                <div class="eseo-score-label">
+                                    <div class="eseo-score-dot" style="background:#7ad03a;"></div> Good 
+                                    <span class="eseo-score-count"><?php echo esc_html($seo_scores['good']); ?></span>
+                                </div>
+                                <a href="<?php echo admin_url('edit.php'); ?>" class="eseo-score-view">View</a>
+                            </li>
+                            <li>
+                                <div class="eseo-score-label">
+                                    <div class="eseo-score-dot" style="background:#e88a31;"></div> OK 
+                                    <span class="eseo-score-count"><?php echo esc_html($seo_scores['ok']); ?></span>
+                                </div>
+                                <a href="<?php echo admin_url('edit.php'); ?>" class="eseo-score-view">View</a>
+                            </li>
+                            <li>
+                                <div class="eseo-score-label">
+                                    <div class="eseo-score-dot" style="background:#dc3232;"></div> Needs improvement 
+                                    <span class="eseo-score-count"><?php echo esc_html($seo_scores['needs_improvement']); ?></span>
+                                </div>
+                                <a href="<?php echo admin_url('edit.php'); ?>" class="eseo-score-view">View</a>
+                            </li>
+                            <li>
+                                <div class="eseo-score-label">
+                                    <div class="eseo-score-dot" style="background:#dcdde0;"></div> Not analyzed 
+                                    <span class="eseo-score-count"><?php echo esc_html($seo_scores['not_analyzed']); ?></span>
+                                </div>
+                                <a href="<?php echo admin_url('edit.php'); ?>" class="eseo-score-view">View</a>
+                            </li>
+                        </ul>
+                        <div class="eseo-chart-container">
+                            <canvas id="seoScoresChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
+
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Organic Sessions Chart
+            const ctx1 = document.getElementById('organicSessionsChart').getContext('2d');
+            new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: ['May 25', 'May 28', 'May 31', 'Jun 3', 'Jun 6', 'Jun 9', 'Jun 12', 'Jun 15', 'Jun 18', 'Jun 21'],
+                    datasets: [{
+                        label: 'Organic sessions',
+                        data: [0, 0, 0, 0, 0, 0, 1, 3, 1, 4, 0, 2, 0, 3], // Mock points matching screenshot shape
+                        borderColor: '#a32375',
+                        backgroundColor: 'rgba(163, 35, 117, 0.1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#a32375',
+                        pointBorderColor: '#fff',
+                        pointRadius: 4,
+                        fill: true,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, border: {display: false}, grid: {color: '#f0f0f1'} },
+                        x: { grid: {display: false} }
+                    }
+                }
+            });
+
+            // SEO Scores Donut Chart
+            const ctx2 = document.getElementById('seoScoresChart').getContext('2d');
+            const dataScores = [
+                <?php echo (int) $seo_scores['good']; ?>,
+                <?php echo (int) $seo_scores['ok']; ?>,
+                <?php echo (int) $seo_scores['needs_improvement']; ?>,
+                <?php echo (int) $seo_scores['not_analyzed']; ?>
+            ];
+            
+            // If all zero, show a grey ring
+            const total = dataScores.reduce((a,b) => a + b, 0);
+            if (total === 0) {
+                dataScores[3] = 1; // Fake one gray dot for empty state
+            }
+
+            new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Good', 'OK', 'Needs improvement', 'Not analyzed'],
+                    datasets: [{
+                        data: dataScores,
+                        backgroundColor: ['#7ad03a', '#e88a31', '#dc3232', '#dcdde0'],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '75%',
+                    plugins: { legend: { display: false } }
+                }
+            });
+        });
+        </script>
         <?php
     }
 
