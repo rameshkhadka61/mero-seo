@@ -111,9 +111,22 @@ jQuery(document).ready(function($) {
         const type = $btn.data('type');
         const keyword = $keyword.val() ? $keyword.val().trim() : '';
 
-        if (!keyword) {
+        // If not generating keyword, require a keyword first
+        if (type !== 'keyword' && !keyword) {
             alert('Please enter a Focus Keyword first.');
             return;
+        }
+
+        let postTitle = '';
+        if (type === 'keyword') {
+            postTitle = $('#title').val() ? $('#title').val().trim() : '';
+            if (!postTitle && typeof wp !== 'undefined' && wp.data && wp.data.select('core/editor')) {
+                postTitle = wp.data.select('core/editor').getEditedPostAttribute('title') || '';
+            }
+            if (!postTitle) {
+                alert('Please enter a Post Title at the top of the editor first so the AI knows what your post is about.');
+                return;
+            }
         }
 
         const originalText = $btn.text();
@@ -137,14 +150,17 @@ jQuery(document).ready(function($) {
                 nonce: eseo_vars.ai_nonce,
                 type: type,
                 keyword: keyword,
+                post_title: postTitle,
                 content: contentVal.substring(0, 3000) // limit content sent
             },
             success: function(response) {
                 if (response.success) {
                     if (type === 'title') {
                         $title.val(response.data).trigger('input');
-                    } else {
+                    } else if (type === 'description') {
                         $desc.val(response.data).trigger('input');
+                    } else if (type === 'keyword') {
+                        $keyword.val(response.data).trigger('input');
                     }
                 } else {
                     if (response.data && response.data.code === 'no_api_key') {

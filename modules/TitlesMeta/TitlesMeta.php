@@ -56,8 +56,10 @@ class TitlesMeta {
         ?>
         <div class="eseo-meta-box-container" style="display:flex; flex-direction:column; gap:15px;">
             <div class="eseo-field">
-                <label for="eseo_focus_keyword"><strong>Focus Keyword</strong></label><br>
-                <input type="text" id="eseo_focus_keyword" name="eseo_focus_keyword" value="<?php echo esc_attr( $keyword ); ?>" style="width:100%;" />
+                <label for="eseo_focus_keyword"><strong>Focus Keyword</strong></label>
+                <button type="button" class="button button-secondary eseo-ai-btn" data-type="keyword" style="margin-left: 10px;">✨ Suggest Keyword</button>
+                <br>
+                <input type="text" id="eseo_focus_keyword" name="eseo_focus_keyword" value="<?php echo esc_attr( $keyword ); ?>" style="width:100%; margin-top: 5px;" />
             </div>
             <div class="eseo-field">
                 <label for="eseo_meta_title"><strong>SEO Title</strong></label>

@@ -31,8 +31,12 @@ class AiSEO {
         $prompt = '';
         if ( $type === 'title' ) {
             $prompt = "Generate a highly engaging, SEO-optimized title for a blog post about '{$keyword}'. The title must be under 60 characters. Return only the title text.";
-        } else {
+        } elseif ( $type === 'description' ) {
             $prompt = "Generate an SEO-optimized meta description for a blog post about '{$keyword}'. Include the keyword naturally. Keep it between 140 and 160 characters. Return only the description text.";
+        } elseif ( $type === 'keyword' ) {
+            // Send the post title to AI to generate a focus keyword
+            $post_title = sanitize_text_field( $_POST['post_title'] ?? '' );
+            $prompt = "Act as an expert SEO researcher. Based on the following post title: '{$post_title}', suggest the single most effective Focus Keyword. The keyword should ideally have high search volume intent. Return ONLY the keyword text (1 to 4 words maximum), nothing else.";
         }
 
         $response = wp_remote_post( 'https://api.openai.com/v1/chat/completions', [
