@@ -120,7 +120,7 @@ class AiSEO {
                 $generated = trim( $data['candidates'][0]['content']['parts'][0]['text'], '"\'' );
                 wp_send_json_success( $generated );
             } else {
-                wp_send_json_error( 'Invalid Gemini API Response. ' . $body );
+                wp_send_json_error( 'Debug v1.1.6: Invalid Gemini API Response for model [' . $gemini_model . ']. ' . $body );
             }
         }
     }
