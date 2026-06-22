@@ -46,6 +46,16 @@ class Menu {
             'eseo-indexing-settings',
             [ $this, 'render_indexing_settings' ]
         );
+
+        $migration_module = new \ESEO\Modules\Tools\Migration();
+        add_submenu_page(
+            'enterprise-seo',
+            'Tools & Migration',
+            'Tools & Migration',
+            'manage_options',
+            'eseo-tools',
+            [ $migration_module, 'render_tools_page' ]
+        );
     }
 
     public function register_settings() {

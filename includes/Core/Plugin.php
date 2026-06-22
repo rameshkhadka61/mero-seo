@@ -106,6 +106,12 @@ class Plugin {
             $image_seo = new \ESEO\Modules\ImageSEO\ImageSEO();
             $image_seo->init();
         }
+
+        // Always load tools for admin
+        if ( is_admin() ) {
+            $migration = new \ESEO\Modules\Tools\Migration();
+            $migration->init();
+        }
     }
 
 	public function run() {
