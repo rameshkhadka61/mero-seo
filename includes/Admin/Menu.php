@@ -41,7 +41,9 @@ class Menu {
 
     public function register_settings() {
         register_setting( 'eseo_ai_options', 'eseo_openai_key' );
+        register_setting( 'eseo_ai_options', 'eseo_openai_model' );
         register_setting( 'eseo_ai_options', 'eseo_gemini_key' );
+        register_setting( 'eseo_ai_options', 'eseo_gemini_model' );
         register_setting( 'eseo_ai_options', 'eseo_preferred_ai_engine' );
         register_setting( 'eseo_ai_options', 'eseo_modules_disabled', [
             'type' => 'array',
@@ -139,10 +141,32 @@ class Menu {
                         </td>
                     </tr>
                     <tr valign="top">
+                        <th scope="row">OpenAI Model</th>
+                        <td>
+                            <?php $o_model = get_option('eseo_openai_model', 'gpt-3.5-turbo'); ?>
+                            <select name="eseo_openai_model">
+                                <option value="gpt-3.5-turbo" <?php selected($o_model, 'gpt-3.5-turbo'); ?>>GPT-3.5 Turbo (Fast & Cheap)</option>
+                                <option value="gpt-4o" <?php selected($o_model, 'gpt-4o'); ?>>GPT-4o (Most Powerful)</option>
+                                <option value="gpt-4-turbo" <?php selected($o_model, 'gpt-4-turbo'); ?>>GPT-4 Turbo</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr valign="top">
                         <th scope="row">Gemini API Key</th>
                         <td>
                             <input type="password" name="eseo_gemini_key" value="<?php echo esc_attr( get_option('eseo_gemini_key') ); ?>" class="regular-text" />
                             <p class="description">Required if Gemini is selected.</p>
+                        </td>
+                    </tr>
+                    <tr valign="top">
+                        <th scope="row">Gemini Model</th>
+                        <td>
+                            <?php $g_model = get_option('eseo_gemini_model', 'gemini-1.5-flash'); ?>
+                            <select name="eseo_gemini_model">
+                                <option value="gemini-1.5-flash" <?php selected($g_model, 'gemini-1.5-flash'); ?>>Gemini 1.5 Flash (Fast & Cheap)</option>
+                                <option value="gemini-1.5-pro" <?php selected($g_model, 'gemini-1.5-pro'); ?>>Gemini 1.5 Pro (Most Powerful)</option>
+                                <option value="gemini-pro" <?php selected($g_model, 'gemini-pro'); ?>>Gemini 1.0 Pro</option>
+                            </select>
                         </td>
                     </tr>
                 </table>

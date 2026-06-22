@@ -62,13 +62,14 @@ class AiSEO {
         }
         
         if ( $engine === 'openai' ) {
+            $openai_model = get_option( 'eseo_openai_model', 'gpt-3.5-turbo' );
             $response = wp_remote_post( 'https://api.openai.com/v1/chat/completions', [
                 'headers' => [
                     'Authorization' => 'Bearer ' . $openai_key,
                     'Content-Type'  => 'application/json',
                 ],
                 'body' => wp_json_encode( [
-                    'model' => 'gpt-3.5-turbo',
+                    'model' => $openai_model,
                     'messages' => [
                         [ 'role' => 'user', 'content' => $prompt ]
                     ]
@@ -91,7 +92,8 @@ class AiSEO {
             }
         } else {
             // Gemini API
-            $response = wp_remote_post( 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' . $gemini_key, [
+            $gemini_model = get_option( 'eseo_gemini_model', 'gemini-1.5-flash' );
+            $response = wp_remote_post( 'https://generativelanguage.googleapis.com/v1beta/models/' . $gemini_model . ':generateContent?key=' . $gemini_key, [
                 'headers' => [
                     'Content-Type'  => 'application/json',
                 ],
