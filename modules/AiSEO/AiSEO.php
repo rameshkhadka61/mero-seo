@@ -92,7 +92,7 @@ class AiSEO {
             }
         } else {
             // Gemini API
-            $gemini_model = get_option( 'eseo_ai_gemini_model', 'gemini-1.5-flash' );
+            $gemini_model = get_option( 'eseo_ai_model_v2', 'gemini-2.0-flash' );
             $response = wp_remote_post( 'https://generativelanguage.googleapis.com/v1/models/' . $gemini_model . ':generateContent?key=' . $gemini_key, [
                 'headers' => [
                     'Content-Type'  => 'application/json',

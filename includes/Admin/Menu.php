@@ -92,7 +92,7 @@ class Menu {
         register_setting( 'eseo_ai_options', 'eseo_openai_key' );
         register_setting( 'eseo_ai_options', 'eseo_openai_model' );
         register_setting( 'eseo_ai_options', 'eseo_gemini_key' );
-        register_setting( 'eseo_ai_options', 'eseo_ai_gemini_model' );
+        register_setting( 'eseo_ai_options', 'eseo_ai_model_v2' );
         register_setting( 'eseo_ai_options', 'eseo_preferred_ai_engine' );
         register_setting( 'eseo_ai_options', 'eseo_modules_disabled', [
             'type' => 'array',
@@ -693,12 +693,13 @@ class Menu {
                     <tr valign="top">
                         <th scope="row">Gemini Model</th>
                         <td>
-                            <?php $g_model = get_option('eseo_ai_gemini_model', 'gemini-1.5-flash'); ?>
-                            <select name="eseo_ai_gemini_model">
-                                <option value="gemini-1.5-flash" <?php selected($g_model, 'gemini-1.5-flash'); ?>>Gemini 1.5 Flash (Fastest, Default)</option>
-                                <option value="gemini-1.5-pro" <?php selected($g_model, 'gemini-1.5-pro'); ?>>Gemini 1.5 Pro (Most Powerful)</option>
-                                <option value="gemini-1.5-flash-8b" <?php selected($g_model, 'gemini-1.5-flash-8b'); ?>>Gemini 1.5 Flash-8B (Lightweight)</option>
-                                <option value="gemini-1.0-pro" <?php selected($g_model, 'gemini-1.0-pro'); ?>>Gemini 1.0 Pro (Legacy)</option>
+                            <?php $g_model = get_option('eseo_ai_model_v2', 'gemini-2.0-flash'); ?>
+                            <select name="eseo_ai_model_v2">
+                                <option value="gemini-2.0-flash" <?php selected($g_model, 'gemini-2.0-flash'); ?>>Gemini 2.0 Flash</option>
+                                <option value="gemini-3.1-flash-lite" <?php selected($g_model, 'gemini-3.1-flash-lite'); ?>>Gemini 3.1 Flash Lite</option>
+                                <option value="gemini-3.5-flash" <?php selected($g_model, 'gemini-3.5-flash'); ?>>Gemini 3.5 Flash</option>
+                                <option value="gemini-1.5-flash" <?php selected($g_model, 'gemini-1.5-flash'); ?>>Gemini 1.5 Flash (Standard)</option>
+                                <option value="gemini-1.5-pro" <?php selected($g_model, 'gemini-1.5-pro'); ?>>Gemini 1.5 Pro (Standard)</option>
                             </select>
                         </td>
                     </tr>
