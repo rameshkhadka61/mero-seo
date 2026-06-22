@@ -66,6 +66,16 @@ class Menu {
             'eseo-analytics',
             [ $analytics_module, 'render_settings_page' ]
         );
+
+        $titles_settings = new \ESEO\Modules\TitlesMeta\Settings();
+        add_submenu_page(
+            'enterprise-seo',
+            'Search Appearance',
+            'Search Appearance',
+            'manage_options',
+            'eseo-titles-meta',
+            [ $titles_settings, 'render_settings_page' ]
+        );
     }
 
     public function register_settings() {

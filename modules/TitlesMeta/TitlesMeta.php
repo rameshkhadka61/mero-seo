@@ -194,69 +194,163 @@ class TitlesMeta {
     }
 
     public function filter_title_parts( $title_parts ) {
+        $settings = get_option( 'eseo_titles_meta_settings', [] );
+
         if ( is_singular() ) {
             $post_id = get_the_ID();
+            $post_type = get_post_type( $post_id );
             $custom_title = get_post_meta( $post_id, '_eseo_meta_title', true );
             
+            if ( empty( $custom_title ) ) {
+                $prefix = 'pt_' . $post_type;
+                $custom_title = isset($settings[$prefix.'_title']) ? $settings[$prefix.'_title'] : '%title% - %sitename%';
+            }
+
             if ( ! empty( $custom_title ) ) {
-                $parsed_title = $this->parse_variables( $custom_title, $post_id );
-                // Replace the entire title with our custom parsed title
-                $title_parts['title'] = $parsed_title;
-                // Unset other parts so WordPress doesn't append sitename again if we already did
-                unset( $title_parts['site'] );
-                unset( $title_parts['tagline'] );
+                $title_parts['title'] = $this->parse_variables( $custom_title, $post_id, 'post' );
+                unset( $title_parts['site'], $title_parts['tagline'] );
+            }
+        } elseif ( is_category() || is_tag() || is_tax() ) {
+            $term = get_queried_object();
+            if ( $term ) {
+                $prefix = 'tax_' . $term->taxonomy;
+                $custom_title = isset($settings[$prefix.'_title']) ? $settings[$prefix.'_title'] : '%title% Archives - %sitename%';
+                if ( ! empty( $custom_title ) ) {
+                    $title_parts['title'] = $this->parse_variables( $custom_title, $term->term_id, 'term' );
+                    unset( $title_parts['site'], $title_parts['tagline'] );
+                }
+            }
+        } elseif ( is_author() ) {
+            $author = get_queried_object();
+            if ( $author ) {
+                $prefix = 'arch_author';
+                $custom_title = isset($settings[$prefix.'_title']) ? $settings[$prefix.'_title'] : '%title%, Author at %sitename%';
+                if ( ! empty( $custom_title ) ) {
+                    $title_parts['title'] = $this->parse_variables( $custom_title, $author->ID, 'author' );
+                    unset( $title_parts['site'], $title_parts['tagline'] );
+                }
             }
         }
+
         return $title_parts;
     }
 
     public function output_meta_tags() {
+        $settings = get_option( 'eseo_titles_meta_settings', [] );
+
         if ( is_singular() ) {
             $post_id = get_the_ID();
-            $custom_desc = get_post_meta( $post_id, '_eseo_meta_description', true );
+            $post_type = get_post_type( $post_id );
             
+            // Description
+            $custom_desc = get_post_meta( $post_id, '_eseo_meta_description', true );
+            if ( empty( $custom_desc ) ) {
+                $prefix = 'pt_' . $post_type;
+                $custom_desc = isset($settings[$prefix.'_desc']) ? $settings[$prefix.'_desc'] : '%excerpt%';
+            }
+
             if ( ! empty( $custom_desc ) ) {
-                $parsed_desc = $this->parse_variables( $custom_desc, $post_id );
-                echo '<meta name="description" content="' . esc_attr( $parsed_desc ) . '" />' . "\n";
+                echo '<meta name="description" content="' . esc_attr( $this->parse_variables( $custom_desc, $post_id, 'post' ) ) . '" />' . "\n";
             }
 
             // Output Canonical URL
             $canonical = get_post_meta( $post_id, '_eseo_canonical_url', true );
             if ( ! empty( $canonical ) ) {
-                // Remove default WP canonical
                 remove_action( 'wp_head', 'rel_canonical' );
                 echo '<link rel="canonical" href="' . esc_url( $canonical ) . '" />' . "\n";
             }
 
             // Output Meta Robots
             $robots_index = get_post_meta( $post_id, '_eseo_meta_robots_index', true );
+            if ( empty($robots_index) || $robots_index === 'default' ) {
+                $prefix = 'pt_' . $post_type;
+                $robots_index = isset($settings[$prefix.'_robots']) ? $settings[$prefix.'_robots'] : 'index';
+            }
+
             $robots_follow = get_post_meta( $post_id, '_eseo_meta_robots_follow', true );
             
             $robots = [];
-            if ( ! empty( $robots_index ) && $robots_index !== 'default' ) {
-                $robots[] = $robots_index;
-            }
-            if ( ! empty( $robots_follow ) && $robots_follow !== 'default' ) {
-                $robots[] = $robots_follow;
-            }
+            if ( ! empty( $robots_index ) && $robots_index !== 'default' ) $robots[] = $robots_index;
+            if ( ! empty( $robots_follow ) && $robots_follow !== 'default' ) $robots[] = $robots_follow;
 
             if ( ! empty( $robots ) ) {
-                // If WordPress already output noindex (e.g. from global settings), be careful.
-                // But we are explicitly overriding it here.
                 echo '<meta name="robots" content="' . esc_attr( implode( ', ', $robots ) ) . '" />' . "\n";
+            }
+        } elseif ( is_category() || is_tag() || is_tax() ) {
+            $term = get_queried_object();
+            if ( $term ) {
+                $prefix = 'tax_' . $term->taxonomy;
+                $custom_desc = isset($settings[$prefix.'_desc']) ? $settings[$prefix.'_desc'] : '%excerpt%';
+                if ( ! empty( $custom_desc ) ) {
+                    echo '<meta name="description" content="' . esc_attr( $this->parse_variables( $custom_desc, $term->term_id, 'term' ) ) . '" />' . "\n";
+                }
+                
+                $robots_index = isset($settings[$prefix.'_robots']) ? $settings[$prefix.'_robots'] : 'index';
+                if ( $robots_index === 'noindex' ) {
+                    echo '<meta name="robots" content="noindex, follow" />' . "\n";
+                }
+            }
+        } elseif ( is_author() ) {
+            $author = get_queried_object();
+            if ( $author ) {
+                $prefix = 'arch_author';
+                $custom_desc = isset($settings[$prefix.'_desc']) ? $settings[$prefix.'_desc'] : '';
+                if ( ! empty( $custom_desc ) ) {
+                    echo '<meta name="description" content="' . esc_attr( $this->parse_variables( $custom_desc, $author->ID, 'author' ) ) . '" />' . "\n";
+                }
+                
+                $robots_index = isset($settings[$prefix.'_robots']) ? $settings[$prefix.'_robots'] : 'noindex';
+                if ( $robots_index === 'noindex' ) {
+                    echo '<meta name="robots" content="noindex, follow" />' . "\n";
+                }
             }
         }
     }
 
-    private function parse_variables( $string, $post_id ) {
-        $post = get_post( $post_id );
-        
+    private function parse_variables( $string, $object_id, $type = 'post' ) {
         $replacements = [
-            '%title%'       => $post->post_title,
             '%sitename%'    => get_bloginfo( 'name' ),
-            '%date%'        => get_the_date( '', $post_id ),
+            '%sitedesc%'    => get_bloginfo( 'description' ),
             '%currentyear%' => date( 'Y' ),
+            '%currentmonth%'=> date( 'F' ),
+            '%title%'       => '',
+            '%date%'        => '',
+            '%excerpt%'     => '',
+            '%category%'    => '',
         ];
+
+        if ( $type === 'post' ) {
+            $post = get_post( $object_id );
+            if ( $post ) {
+                $replacements['%title%'] = $post->post_title;
+                $replacements['%date%'] = get_the_date( '', $post );
+                
+                // Excerpt logic
+                if ( ! empty( $post->post_excerpt ) ) {
+                    $replacements['%excerpt%'] = wp_strip_all_tags( $post->post_excerpt );
+                } else {
+                    $replacements['%excerpt%'] = wp_trim_words( wp_strip_all_tags( $post->post_content ), 20, '...' );
+                }
+
+                // Category logic
+                $categories = get_the_category( $post->ID );
+                if ( ! empty( $categories ) ) {
+                    $replacements['%category%'] = $categories[0]->name;
+                }
+            }
+        } elseif ( $type === 'term' ) {
+            $term = get_term( $object_id );
+            if ( $term ) {
+                $replacements['%title%'] = $term->name;
+                $replacements['%excerpt%'] = wp_strip_all_tags( $term->description );
+            }
+        } elseif ( $type === 'author' ) {
+            $author = get_userdata( $object_id );
+            if ( $author ) {
+                $replacements['%title%'] = $author->display_name;
+                $replacements['%excerpt%'] = wp_strip_all_tags( get_the_author_meta( 'description', $author->ID ) );
+            }
+        }
 
         return str_replace( array_keys( $replacements ), array_values( $replacements ), $string );
     }

@@ -114,6 +114,9 @@ class Plugin {
 
             $analytics = new \ESEO\Modules\Analytics\Analytics();
             $analytics->init();
+
+            $titles_settings = new \ESEO\Modules\TitlesMeta\Settings();
+            $titles_settings->init();
         }
     }
 
