@@ -138,6 +138,9 @@
     max-width: 600px;
     box-shadow: 0 1px 6px rgba(32,33,36,0.1);
     margin-top: 10px;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
 }
 
 .eseo-serp-url {
@@ -163,9 +166,8 @@
 }
 
 .eseo-serp-content-wrapper {
-    display: flex;
-    gap: 12px;
-    align-items: flex-start;
+    flex: 1;
+    min-width: 0;
 }
 
 .eseo-serp-desc {
