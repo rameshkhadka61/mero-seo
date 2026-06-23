@@ -232,12 +232,15 @@ jQuery(document).ready(function($) {
             contentVal = $content.val();
         }
 
+        const postId = $('#post_ID').length ? $('#post_ID').val() : '';
+
         $.ajax({
             url: eseo_vars.ajax_url,
             method: 'POST',
             data: {
                 action: 'eseo_generate_meta',
                 nonce: eseo_vars.ai_nonce,
+                post_id: postId,
                 type: type,
                 keyword: keyword,
                 post_title: postTitle,

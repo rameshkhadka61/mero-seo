@@ -18,6 +18,17 @@ class AiSEO {
         $type = sanitize_text_field( $_POST['type'] ); // 'title' or 'description'
         $keyword = sanitize_text_field( $_POST['keyword'] );
         $content = sanitize_textarea_field( $_POST['content'] ?? '' );
+        $post_title = sanitize_text_field( $_POST['post_title'] ?? '' );
+        $post_id = isset( $_POST['post_id'] ) ? intval( $_POST['post_id'] ) : 0;
+        
+        $categories_text = '';
+        if ( $post_id ) {
+            $categories = get_the_category( $post_id );
+            if ( ! empty( $categories ) && ! is_wp_error( $categories ) ) {
+                $cat_names = wp_list_pluck( $categories, 'name' );
+                $categories_text = implode( ', ', $cat_names );
+            }
+        }
         
         $openai_key = get_option( 'eseo_openai_key' );
         $gemini_key = get_option( 'eseo_gemini_key' );
@@ -30,14 +41,21 @@ class AiSEO {
             ] );
         }
 
+        $context = "Title: {$post_title}\n";
+        if ( ! empty( $categories_text ) ) {
+            $context .= "Categories: {$categories_text}\n";
+        }
+        if ( ! empty( $content ) ) {
+            $context .= "Content Snippet: {$content}\n";
+        }
+
         $prompt = '';
         if ( $type === 'title' ) {
-            $prompt = "Generate a highly engaging, SEO-optimized title for a blog post about '{$keyword}'. The title must be under 60 characters. Return only the title text.";
+            $prompt = "You are an expert SEO copywriter. Analyze the following blog post context:\n\n{$context}\n\nTask: Generate a highly unique, engaging SEO Title. You MUST weave in the focus keyword '{$keyword}'. Draw heavily from the category themes and the content snippet to make it specific to this exact article. The title must be under 60 characters. Return only the title text, nothing else.";
         } elseif ( $type === 'description' ) {
-            $prompt = "Generate an SEO-optimized meta description for a blog post about '{$keyword}'. Include the keyword naturally. Keep it between 140 and 160 characters. Return only the description text.";
+            $prompt = "You are an expert SEO copywriter. Analyze the following blog post context:\n\n{$context}\n\nTask: Generate a highly unique, engaging SEO Meta Description. You MUST weave in the focus keyword '{$keyword}'. Draw heavily from the category themes and the content snippet to make it specific to this exact article. Keep it between 140 and 160 characters. Return only the description text, nothing else.";
         } elseif ( $type === 'keyword' ) {
-            $post_title = sanitize_text_field( $_POST['post_title'] ?? '' );
-            $prompt = "Act as an expert SEO researcher. Based on the following post title: '{$post_title}', suggest the single most effective Focus Keyword. The keyword should ideally have high search volume intent. Return ONLY the keyword text (1 to 4 words maximum), nothing else.";
+            $prompt = "Act as an expert SEO researcher. Based on the following post context:\n\n{$context}\n\nSuggest the single most effective Focus Keyword. The keyword should ideally have high search volume intent and summarize the core topic. Return ONLY the keyword text (1 to 4 words maximum), nothing else.";
         }
 
         // Determine Engine based on user preference and key availability
