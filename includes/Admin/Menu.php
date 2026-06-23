@@ -7,6 +7,14 @@ class Menu {
     public function init() {
         add_action( 'admin_menu', [ $this, 'register_admin_menu' ] );
         add_action( 'admin_init', [ $this, 'register_settings' ] );
+        add_action( 'save_post', [ $this, 'clear_dashboard_transients' ] );
+    }
+
+    public function clear_dashboard_transients( $post_id ) {
+        if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+            return;
+        }
+        delete_transient( 'eseo_dashboard_scores' );
     }
 
     public function register_admin_menu() {
