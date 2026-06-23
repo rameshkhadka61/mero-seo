@@ -162,11 +162,29 @@
     text-decoration: underline;
 }
 
+.eseo-serp-content-wrapper {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
 .eseo-serp-desc {
     color: #4d5156;
     font-size: 14px;
     line-height: 1.58;
     word-wrap: break-word;
+    flex: 1;
+}
+
+.eseo-serp-thumb {
+    width: 104px;
+    height: 104px;
+    border-radius: 8px;
+    background-size: cover;
+    background-position: center;
+    background-color: #f0f0f1;
+    flex-shrink: 0;
+    border: 1px solid #dfe1e5;
 }
 
 /* SERP Toggle Bar */
@@ -216,4 +234,9 @@
 
 .eseo-serp-preview.mobile-view .eseo-serp-desc {
     font-size: 13px;
+}
+
+.eseo-serp-preview.mobile-view .eseo-serp-thumb {
+    width: 92px;
+    height: 92px;
 }

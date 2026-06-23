@@ -98,7 +98,10 @@ class TitlesMeta {
                 <div class="eseo-serp-preview" id="eseo-serp-preview-box">
                     <div class="eseo-serp-url" id="eseo-serp-url-preview"><?php echo esc_url( get_site_url() ); ?>/your-post-url/</div>
                     <div class="eseo-serp-title" id="eseo-serp-title-preview">Your Post Title Here - <?php echo esc_html( get_bloginfo('name') ); ?></div>
-                    <div class="eseo-serp-desc" id="eseo-serp-desc-preview">Please provide a meta description. If you don't, Google will try to find a relevant part of your post to show in the search results.</div>
+                    <div class="eseo-serp-content-wrapper">
+                        <div class="eseo-serp-desc" id="eseo-serp-desc-preview">Please provide a meta description. If you don't, Google will try to find a relevant part of your post to show in the search results.</div>
+                        <div class="eseo-serp-thumb" id="eseo-serp-thumb-preview" style="display:none;"></div>
+                    </div>
                 </div>
             </div>
 

@@ -81,14 +81,42 @@ jQuery(document).ready(function($) {
             }
         }
 
-        // Featured Image Check
+        // Featured Image Check & SERP Thumbnail
         let hasFeaturedImage = false;
+        let thumbUrl = '';
+        const $serpThumb = $('#eseo-serp-thumb-preview');
+
         if (typeof wp !== 'undefined' && wp.data && wp.data.select('core/editor')) {
             const featuredImageId = wp.data.select('core/editor').getEditedPostAttribute('featured_media');
             hasFeaturedImage = featuredImageId && featuredImageId > 0;
+            if (hasFeaturedImage) {
+                const $editorImg = $('.editor-post-featured-image__preview img, .components-responsive-wrapper__content');
+                if ($editorImg.length && $editorImg.attr('src')) {
+                    thumbUrl = $editorImg.attr('src');
+                } else {
+                    const media = wp.data.select('core').getMedia(featuredImageId);
+                    if (media && media.source_url) {
+                        thumbUrl = media.source_url;
+                    }
+                }
+            }
         } else {
             // Classic editor
             hasFeaturedImage = $('#_thumbnail_id').length && parseInt($('#_thumbnail_id').val()) > 0;
+            if (hasFeaturedImage) {
+                const $classicImg = $('#set-post-thumbnail img');
+                if ($classicImg.length && $classicImg.attr('src')) {
+                    thumbUrl = $classicImg.attr('src');
+                }
+            }
+        }
+
+        if (hasFeaturedImage && thumbUrl) {
+            $serpThumb.css('background-image', 'url(' + thumbUrl + ')').show();
+        } else if (hasFeaturedImage) {
+            $serpThumb.css('background-image', 'none').show();
+        } else {
+            $serpThumb.hide();
         }
 
         if (hasFeaturedImage) {
