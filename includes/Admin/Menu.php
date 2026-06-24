@@ -717,7 +717,8 @@ class Menu {
                                     .then(pres => {
                                         if ( !pres.success ) {
                                             console.error('Error on post ' + postId + ':', pres.data);
-                                            statusBar.innerText = 'Error on post ' + postId + '. Retrying next...';
+                                            let errorStr = typeof pres.data === 'string' ? pres.data : JSON.stringify(pres.data);
+                                            statusBar.innerText = 'Err ' + postId + ': ' + errorStr.substring(0, 80);
                                         } else {
                                             statusBar.innerText = 'Wait: API rate limiting...';
                                         }

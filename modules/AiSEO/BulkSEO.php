@@ -173,11 +173,10 @@ class BulkSEO {
             }
         }
 
-        // Clean markdown backticks
-        $json_response = trim( $json_response );
-        $json_response = preg_replace('/^```json\s*/i', '', $json_response);
-        $json_response = preg_replace('/```\s*$/', '', $json_response);
-        $json_response = trim( $json_response );
+        // Clean markdown backticks and extract pure JSON
+        if ( preg_match( '/\{.*\}/s', $json_response, $matches ) ) {
+            $json_response = $matches[0];
+        }
 
         // Parse JSON
         $parsed = json_decode( $json_response, true );
