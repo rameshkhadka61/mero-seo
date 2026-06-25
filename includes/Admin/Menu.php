@@ -154,13 +154,20 @@ class Menu {
         $seo_scores = get_transient( 'eseo_dashboard_scores' );
         if ( false === $seo_scores ) {
             $seo_scores = [ 'good' => 0, 'ok' => 0, 'needs_improvement' => 0, 'not_analyzed' => 0 ];
-            $total_posts = (int) $wpdb->get_var( "SELECT COUNT(ID) FROM {$wpdb->posts} WHERE post_status = 'publish' AND post_type NOT IN ('revision', 'nav_menu_item', 'attachment')" );
+            
+            $pts = get_post_types( [ 'public' => true ], 'names' );
+            unset( $pts['attachment'] );
+            $pt_in = "'" . implode( "', '", array_map( 'esc_sql', $pts ) ) . "'";
+
+            $total_posts = (int) $wpdb->get_var( "SELECT COUNT(ID) FROM {$wpdb->posts} WHERE post_status = 'publish' AND post_type IN ($pt_in)" );
             
             $meta_data = $wpdb->get_results( "
-                SELECT post_id, meta_key 
-                FROM {$wpdb->postmeta} 
-                WHERE meta_key IN ('_eseo_meta_title', '_eseo_meta_description', '_eseo_focus_keyword') 
-                AND meta_value != ''
+                SELECT pm.post_id, pm.meta_key 
+                FROM {$wpdb->postmeta} pm
+                JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+                WHERE p.post_status = 'publish' AND p.post_type IN ($pt_in)
+                AND pm.meta_key IN ('_eseo_meta_title', '_eseo_meta_description', '_eseo_focus_keyword') 
+                AND pm.meta_value != ''
             " );
             
             $post_scores = [];
