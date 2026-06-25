@@ -133,7 +133,7 @@ class Schema {
             '@graph' => $graph
         ];
 
-        echo '<script type="application/ld+json" class="eseo-schema-graph">' . wp_json_encode( $schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT ) . '</script>';
+        echo '<script type="application/ld+json">' . wp_json_encode( $schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT ) . '</script>';
     }
 
     private function get_current_url() {
