@@ -412,7 +412,6 @@ class TitlesMeta {
         } elseif ( $type === 'homepage' ) {
             $replacements['%title%'] = get_bloginfo( 'name' );
             $replacements['%excerpt%'] = get_bloginfo( 'description' );
-        }
         } elseif ( $type === 'author' ) {
             $author = get_userdata( $object_id );
             if ( $author ) {
