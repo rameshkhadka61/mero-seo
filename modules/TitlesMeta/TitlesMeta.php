@@ -18,7 +18,30 @@ class TitlesMeta {
 
         // Frontend hooks
         add_filter( 'document_title_parts', [ $this, 'filter_title_parts' ], 10, 1 );
-        add_action( 'wp_head', [ $this, 'output_meta_tags' ], 1 );
+        
+        // Conflict resolution: Output buffering to remove duplicate tags
+        add_action( 'wp_head', [ $this, 'start_head_buffer' ], 0 );
+        add_action( 'wp_head', [ $this, 'end_head_buffer' ], 9999 );
+
+        // Output our tags after the buffer is flushed so they aren't stripped
+        add_action( 'wp_head', [ $this, 'output_meta_tags' ], 10000 );
+    }
+
+    public function start_head_buffer() {
+        ob_start();
+    }
+
+    public function end_head_buffer() {
+        $head = ob_get_clean();
+        
+        // Strip out existing meta tags from theme/other plugins to avoid duplicates
+        $head = preg_replace('/<meta name=["\']description["\'][^>]*>/i', '', $head);
+        $head = preg_replace('/<meta name=["\']robots["\'][^>]*>/i', '', $head);
+        $head = preg_replace('/<link rel=["\']canonical["\'][^>]*>/i', '', $head);
+        $head = preg_replace('/<meta property=["\']og:[^>]*>/i', '', $head);
+        $head = preg_replace('/<meta name=["\']twitter:[^>]*>/i', '', $head);
+        
+        echo $head;
     }
 
     public function register_meta() {

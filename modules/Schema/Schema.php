@@ -6,7 +6,7 @@ class Schema {
 
     public function init() {
         // Output schema in wp_head
-        add_action( 'wp_head', [ $this, 'generate_schema' ], 99 );
+        add_action( 'wp_head', [ $this, 'generate_schema' ], 10099 );
     }
 
     public function generate_schema() {

@@ -5,7 +5,7 @@ namespace ESEO\Modules\LocalSEO;
 class LocalSEO {
 
     public function init() {
-        add_action( 'wp_head', [ $this, 'output_local_schema' ], 101 );
+        add_action( 'wp_head', [ $this, 'output_local_schema' ], 10101 );
     }
 
     public function output_local_schema() {

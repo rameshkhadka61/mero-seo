@@ -5,7 +5,7 @@ namespace ESEO\Modules\SocialSEO;
 class SocialSEO {
 
     public function init() {
-        add_action( 'wp_head', [ $this, 'output_opengraph_tags' ], 5 );
+        add_action( 'wp_head', [ $this, 'output_opengraph_tags' ], 10005 );
     }
 
     public function output_opengraph_tags() {
