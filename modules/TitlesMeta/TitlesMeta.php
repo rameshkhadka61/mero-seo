@@ -57,6 +57,9 @@ class TitlesMeta {
         register_meta( 'post', '_eseo_canonical_url', $meta_args );
         register_meta( 'post', '_eseo_meta_robots_index', $meta_args );
         register_meta( 'post', '_eseo_meta_robots_follow', $meta_args );
+        register_meta( 'post', '_eseo_social_title', $meta_args );
+        register_meta( 'post', '_eseo_social_description', $meta_args );
+        register_meta( 'post', '_eseo_social_image', $meta_args );
     }
 
     public function register_column_hooks() {
@@ -130,6 +133,9 @@ class TitlesMeta {
         $canonical = get_post_meta( $post->ID, '_eseo_canonical_url', true );
         $robots_index = get_post_meta( $post->ID, '_eseo_meta_robots_index', true );
         $robots_follow = get_post_meta( $post->ID, '_eseo_meta_robots_follow', true );
+        $social_title = get_post_meta( $post->ID, '_eseo_social_title', true );
+        $social_desc = get_post_meta( $post->ID, '_eseo_social_description', true );
+        $social_img = get_post_meta( $post->ID, '_eseo_social_image', true );
 
         ?>
         <div class="eseo-meta-box-container" style="display:flex; flex-direction:column; gap:15px;">
@@ -205,7 +211,41 @@ class TitlesMeta {
                 </div>
             </div>
 
+            <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ccd0d4;">
+
+            <div class="eseo-field">
+                <h3 style="margin-top: 0;">🌐 Social Media Optimization (OpenGraph & Twitter Cards)</h3>
+                <label for="eseo_social_title"><strong>Social Share Title</strong></label>
+                <input type="text" id="eseo_social_title" name="eseo_social_title" value="<?php echo esc_attr( $social_title ); ?>" style="width:100%; margin-top: 5px;" placeholder="Leave blank to use SEO Title" />
+            </div>
+
+            <div class="eseo-field">
+                <label for="eseo_social_description"><strong>Social Share Description</strong></label>
+                <textarea id="eseo_social_description" name="eseo_social_description" rows="2" style="width:100%; margin-top: 5px;" placeholder="Leave blank to use Meta Description"><?php echo esc_textarea( $social_desc ); ?></textarea>
+            </div>
+
+            <div class="eseo-field">
+                <label for="eseo_social_image"><strong>Custom Social Image URL</strong></label>
+                <div style="display:flex; gap:10px; margin-top:5px;">
+                    <input type="url" id="eseo_social_image" name="eseo_social_image" value="<?php echo esc_attr( $social_img ); ?>" style="flex:1;" placeholder="https://... (1200x630 recommended for rich WhatsApp/Facebook cards)" />
+                    <button type="button" class="button button-secondary eseo-upload-social-img">📁 Upload / Choose</button>
+                </div>
+            </div>
+
         </div>
+        <script>
+        jQuery(document).ready(function($){
+            $('.eseo-upload-social-img').on('click', function(e){
+                e.preventDefault();
+                var frame = wp.media({ title: 'Select Social Share Image', multiple: false, library: { type: 'image' } });
+                frame.on('select', function(){
+                    var attachment = frame.state().get('selection').first().toJSON();
+                    $('#eseo_social_image').val(attachment.url);
+                });
+                frame.open();
+            });
+        });
+        </script>
         <?php
     }
 
@@ -244,6 +284,15 @@ class TitlesMeta {
         if ( isset( $_POST['eseo_meta_robots_follow'] ) ) {
             update_post_meta( $post_id, '_eseo_meta_robots_follow', sanitize_text_field( $_POST['eseo_meta_robots_follow'] ) );
         }
+        if ( isset( $_POST['eseo_social_title'] ) ) {
+            update_post_meta( $post_id, '_eseo_social_title', sanitize_text_field( $_POST['eseo_social_title'] ) );
+        }
+        if ( isset( $_POST['eseo_social_description'] ) ) {
+            update_post_meta( $post_id, '_eseo_social_description', sanitize_textarea_field( $_POST['eseo_social_description'] ) );
+        }
+        if ( isset( $_POST['eseo_social_image'] ) ) {
+            update_post_meta( $post_id, '_eseo_social_image', sanitize_url( $_POST['eseo_social_image'] ) );
+        }
     }
 
     public function enqueue_admin_scripts( $hook ) {
@@ -252,7 +301,7 @@ class TitlesMeta {
         if ( $hook == 'post-new.php' || $hook == 'post.php' ) {
             $public_post_types = get_post_types( [ 'public' => true ], 'names' );
             if ( isset( $post->post_type ) && in_array( $post->post_type, $public_post_types ) ) {
-                
+                wp_enqueue_media();
                 // Enqueue Premium CSS
                 wp_enqueue_style( 'eseo-admin-css', plugin_dir_url( dirname( __DIR__ ) ) . 'assets/css/admin.css', [], '1.0.0' );
 
