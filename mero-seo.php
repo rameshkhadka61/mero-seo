@@ -3,7 +3,7 @@
  * Plugin Name:       Mero SEO
  * Plugin URI:        https://www.rameskhadka.com.np
  * Description:       An enterprise-level, highly optimized SEO plugin with integrated AI, advanced Schema, XML Sitemaps, and Content Auditing.
- * Version:           1.2.3
+ * Version:           1.2.4
  * Author:            Ramesh Khadka
  * Author URI:        https://www.rameskhadka.com.np
  * Text Domain:       mero-seo
@@ -15,7 +15,7 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
-define( 'ESEO_VERSION', '1.2.3' );
+define( 'ESEO_VERSION', '1.2.4' );
 define( 'ESEO_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'ESEO_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
@@ -61,8 +61,7 @@ use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
 $myUpdateChecker = PucFactory::buildUpdateChecker(
 	'https://github.com/rameshkhadka61/mero-seo/',
 	__FILE__,
-	'mero-seo',
-	1 // Check GitHub every 1 hour instead of default 12
+	'mero-seo'
 );
 // Optional: If you use a specific branch for releases
 $myUpdateChecker->setBranch('main');
