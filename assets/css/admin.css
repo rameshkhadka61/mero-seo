@@ -279,3 +279,26 @@ td.column-eseo_score {
     width: 80px;
     text-align: center;
 }
+
+/* Enterprise Tabs & Dark Mode */
+.eseo-tab-btn:hover {
+    background: #e5e5e5 !important;
+}
+.eseo-tab-btn.active {
+    border-top: 2px solid #2271b1 !important;
+}
+
+body.eseo-dark-mode .eseo-meta-box-container,
+body.eseo-dark-mode .eseo-tab-content {
+    background: #1e1e1e !important;
+    color: #e0e0e0 !important;
+}
+body.eseo-dark-mode .eseo-serp-preview {
+    background: #202124 !important;
+    border-color: #3c4043 !important;
+}
+body.eseo-dark-mode .eseo-serp-title { color: #8ab4f8 !important; }
+body.eseo-dark-mode .eseo-serp-desc { color: #bdc1c6 !important; }
+body.eseo-dark-mode .eseo-serp-url { color: #bdc1c6 !important; }
+body.eseo-dark-mode .eseo-fb-preview { background: #18191a !important; border-color: #3e4042 !important; }
+body.eseo-dark-mode .eseo-tw-preview { background: #15202b !important; border-color: #38444d !important; }

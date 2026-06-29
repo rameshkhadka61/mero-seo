@@ -38,6 +38,19 @@ class Activator {
             KEY post_id (post_id)
         ) $charset_collate;";
 
+        // 404 Logs Table
+        $logs_table_name = $wpdb->prefix . 'eseo_404_logs';
+        $sql .= " CREATE TABLE $logs_table_name (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            url varchar(255) NOT NULL,
+            referrer varchar(255) DEFAULT '' NOT NULL,
+            user_agent varchar(255) DEFAULT '' NOT NULL,
+            hits int(11) DEFAULT 1 NOT NULL,
+            last_accessed datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
+            PRIMARY KEY  (id),
+            KEY url (url)
+        ) $charset_collate;";
+
         require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
         dbDelta( $sql );
         

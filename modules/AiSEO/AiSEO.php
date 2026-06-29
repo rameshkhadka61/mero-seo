@@ -6,6 +6,8 @@ class AiSEO {
 
     public function init() {
         add_action( 'wp_ajax_eseo_generate_meta', [ $this, 'ajax_generate_meta' ] );
+        add_action( 'wp_ajax_eseo_suggest_lsi', [ $this, 'ajax_suggest_lsi' ] );
+        add_action( 'wp_ajax_eseo_get_link_suggestions', [ $this, 'ajax_get_link_suggestions' ] );
     }
 
     public function ajax_generate_meta() {
@@ -141,5 +143,102 @@ class AiSEO {
                 wp_send_json_error( 'Invalid Gemini API Response. ' . $body );
             }
         }
+    }
+
+    public function ajax_suggest_lsi() {
+        check_ajax_referer( 'eseo_ai_nonce', 'nonce' );
+        if ( ! current_user_can( 'edit_posts' ) ) {
+            wp_send_json_error( 'Unauthorized' );
+        }
+
+        $keyword = sanitize_text_field( $_POST['keyword'] ?? '' );
+        if ( empty( $keyword ) ) {
+            wp_send_json_error( 'No keyword provided' );
+        }
+
+        // Try AI first if configured
+        $openai_key = get_option( 'eseo_openai_key' );
+        $gemini_key = get_option( 'eseo_gemini_key' );
+
+        if ( ! empty( $openai_key ) || ! empty( $gemini_key ) ) {
+            $prompt = "Act as an SEO strategist. For the primary keyword '{$keyword}', suggest 8 semantic / LSI keywords or long-tail phrases to include in the content. Return ONLY a JSON array of strings e.g. [\"keyword 1\", \"keyword 2\"]. Do not include markdown formatting or backticks around the JSON array.";
+            
+            if ( ! empty( $openai_key ) ) {
+                $response = wp_remote_post( 'https://api.openai.com/v1/chat/completions', [
+                    'headers' => [ 'Authorization' => 'Bearer ' . $openai_key, 'Content-Type' => 'application/json' ],
+                    'body' => json_encode([
+                        'model' => get_option( 'eseo_openai_model', 'gpt-4o-mini' ),
+                        'messages' => [ [ 'role' => 'user', 'content' => $prompt ] ],
+                        'temperature' => 0.7
+                    ]),
+                    'timeout' => 15
+                ]);
+                if ( ! is_wp_error( $response ) ) {
+                    $body = json_decode( wp_remote_retrieve_body( $response ), true );
+                    if ( isset( $body['choices'][0]['message']['content'] ) ) {
+                        $txt = trim( $body['choices'][0]['message']['content'] );
+                        $txt = preg_replace('/^```json\s*|\s*```$/i', '', $txt);
+                        $arr = json_decode( $txt, true );
+                        if ( is_array( $arr ) ) wp_send_json_success( $arr );
+                    }
+                }
+            } elseif ( ! empty( $gemini_key ) ) {
+                $url = 'https://generativelanguage.googleapis.com/v1beta/models/' . get_option( 'eseo_ai_model_v2', 'gemini-1.5-flash' ) . ':generateContent?key=' . $gemini_key;
+                $response = wp_remote_post( $url, [
+                    'headers' => [ 'Content-Type' => 'application/json' ],
+                    'body' => json_encode([ 'contents' => [ [ 'parts' => [ [ 'text' => $prompt ] ] ] ] ]),
+                    'timeout' => 15
+                ]);
+                if ( ! is_wp_error( $response ) ) {
+                    $body = json_decode( wp_remote_retrieve_body( $response ), true );
+                    if ( isset( $body['candidates'][0]['content']['parts'][0]['text'] ) ) {
+                        $txt = trim( $body['candidates'][0]['content']['parts'][0]['text'] );
+                        $txt = preg_replace('/^```json\s*|\s*```$/i', '', $txt);
+                        $arr = json_decode( $txt, true );
+                        if ( is_array( $arr ) ) wp_send_json_success( $arr );
+                    }
+                }
+            }
+        }
+
+        // Smart rule-based fallbacks if AI is not configured or fails
+        $fallbacks = [
+            'best ' . $keyword,
+            $keyword . ' guide',
+            'how to use ' . $keyword,
+            $keyword . ' tips and tricks',
+            'top ' . $keyword . ' strategies',
+            $keyword . ' benefits',
+            'why ' . $keyword . ' matters',
+            $keyword . ' tutorial'
+        ];
+        wp_send_json_success( $fallbacks );
+    }
+
+    public function ajax_get_link_suggestions() {
+        check_ajax_referer( 'eseo_ai_nonce', 'nonce' );
+        if ( ! current_user_can( 'edit_posts' ) ) {
+            wp_send_json_error( 'Unauthorized' );
+        }
+
+        $keyword = sanitize_text_field( $_POST['keyword'] ?? '' );
+        $post_id = intval( $_POST['post_id'] ?? 0 );
+
+        global $wpdb;
+        $results = [];
+        if ( $keyword ) {
+            $like = '%' . $wpdb->esc_like( $keyword ) . '%';
+            $posts = $wpdb->get_results( $wpdb->prepare( "SELECT ID, post_title FROM {$wpdb->posts} WHERE post_status = 'publish' AND ID != %d AND (post_title LIKE %s OR post_content LIKE %s) LIMIT 8", $post_id, $like, $like ) );
+        } else {
+            $posts = $wpdb->get_results( $wpdb->prepare( "SELECT ID, post_title FROM {$wpdb->posts} WHERE post_status = 'publish' AND ID != %d ORDER BY post_date DESC LIMIT 8", $post_id ) );
+        }
+
+        foreach ( $posts as $p ) {
+            $results[] = [
+                'title' => $p->post_title,
+                'url'   => get_permalink( $p->ID )
+            ];
+        }
+        wp_send_json_success( $results );
     }
 }

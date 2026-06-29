@@ -41,6 +41,13 @@ class PostList {
             } else {
                 echo '<div style="display:inline-block; width:12px; height:12px; border-radius:50%; background:#dcdde0;" title="Not Analyzed"></div>';
             }
+
+            $slug = get_post_field( 'post_name', $post_id );
+            global $wpdb;
+            $has_inbound = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_status = 'publish' AND ID != %d AND post_content LIKE %s LIMIT 1", $post_id, '%' . $wpdb->esc_like( $slug ) . '%' ) );
+            if ( ! $has_inbound && ! empty( $slug ) && get_post_status( $post_id ) === 'publish' ) {
+                echo '<span style="display:inline-block; margin-left:6px; padding:2px 6px; background:#fee2e2; color:#991b1b; font-size:10px; font-weight:bold; border-radius:4px;" title="Orphan Post: No internal links point to this post">🏝️ Orphan</span>';
+            }
         }
     }
 
@@ -56,6 +63,7 @@ class PostList {
             <option value="ok" <?php selected($current, 'ok'); ?>>OK</option>
             <option value="needs_improvement" <?php selected($current, 'needs_improvement'); ?>>Needs Improvement</option>
             <option value="not_analyzed" <?php selected($current, 'not_analyzed'); ?>>Not Analyzed</option>
+            <option value="orphan" <?php selected($current, 'orphan'); ?>>🏝️ Orphan Posts (No Inbound Links)</option>
         </select>
         <?php
     }
@@ -68,11 +76,22 @@ class PostList {
 
         if ( isset( $_GET['seo_filter'] ) && $_GET['seo_filter'] !== '' ) {
             $filter = sanitize_text_field( $_GET['seo_filter'] );
-
-            // We need to count how many of the 3 meta keys exist and are not empty
-            // This is complex in WP_Query, so we will do a custom DB query to get post IDs
             global $wpdb;
-            
+
+            if ( $filter === 'orphan' ) {
+                $orphan_ids = [];
+                $posts = $wpdb->get_results( "SELECT ID, post_name FROM {$wpdb->posts} WHERE post_status = 'publish' AND post_type IN ('post', 'page')" );
+                foreach ( $posts as $p ) {
+                    if ( empty( $p->post_name ) ) continue;
+                    $linked = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_status = 'publish' AND ID != %d AND post_content LIKE %s LIMIT 1", $p->ID, '%' . $wpdb->esc_like( $p->post_name ) . '%' ) );
+                    if ( ! $linked ) {
+                        $orphan_ids[] = $p->ID;
+                    }
+                }
+                $query->set( 'post__in', empty( $orphan_ids ) ? [ 0 ] : $orphan_ids );
+                return;
+            }
+
             $meta_data = $wpdb->get_results( "
                 SELECT post_id, count(meta_key) as score
                 FROM {$wpdb->postmeta} 

@@ -118,6 +118,35 @@ class Schema {
                     'url' => get_author_posts_url( $post->post_author )
                 ];
             }
+
+            // 6. FAQPage Node
+            $faq_raw = get_post_meta( $post->ID, '_eseo_faq_schema', true );
+            if ( ! empty( $faq_raw ) ) {
+                $faq_items = json_decode( $faq_raw, true );
+                if ( is_array( $faq_items ) && ! empty( $faq_items ) ) {
+                    $main_entity = [];
+                    foreach ( $faq_items as $item ) {
+                        if ( ! empty( $item['q'] ) && ! empty( $item['a'] ) ) {
+                            $main_entity[] = [
+                                '@type' => 'Question',
+                                'name' => sanitize_text_field( $item['q'] ),
+                                'acceptedAnswer' => [
+                                    '@type' => 'Answer',
+                                    'text' => wp_kses_post( $item['a'] )
+                                ]
+                            ];
+                        }
+                    }
+                    if ( ! empty( $main_entity ) ) {
+                        $graph[] = [
+                            '@type' => 'FAQPage',
+                            '@id' => $current_url . '#faq',
+                            'isPartOf' => [ '@id' => $webpage_id ],
+                            'mainEntity' => $main_entity
+                        ];
+                    }
+                }
+            }
         } elseif ( is_front_page() || is_home() ) {
             $webpage_node['@type'] = 'CollectionPage';
             $webpage_node['about'] = [ '@id' => $publisher_id ];

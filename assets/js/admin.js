@@ -52,6 +52,22 @@ jQuery(document).ready(function($) {
             slug = titleForSlug;
         }
         $serpUrl.text(eseo_vars.site_url + '/' + slug + '/');
+        return displayTitle;
+    }
+
+    function updateSocialPreview(displayTitle, descVal, thumbUrl) {
+        const socTitle = $('#eseo_social_title').val() || displayTitle || 'Your Post Title';
+        const socDesc = $('#eseo_social_description').val() || descVal || 'Your post description preview will appear here.';
+        const socImg = $('#eseo_social_image').val() || thumbUrl;
+
+        $('#eseo-fb-title-preview, #eseo-tw-title-preview').text(socTitle);
+        $('#eseo-fb-desc-preview, #eseo-tw-desc-preview').text(socDesc);
+
+        if (socImg) {
+            $('#eseo-fb-img-preview, #eseo-tw-img-preview').css('background-image', 'url(' + socImg + ')').text('');
+        } else {
+            $('#eseo-fb-img-preview, #eseo-tw-img-preview').css('background-image', 'none').text('No Image Selected');
+        }
     }
 
     function analyzeSEO() {
@@ -66,7 +82,7 @@ jQuery(document).ready(function($) {
         updateProgressBar($('#eseo-desc-progress'), descVal.length, 160, 140);
 
         // Update SERP preview
-        updateSerpPreview(titleVal, descVal);
+        let displayTitle = updateSerpPreview(titleVal, descVal);
         
         if (typeof wp !== 'undefined' && wp.data && wp.data.select('core/editor')) {
             // Gutenberg
@@ -118,6 +134,8 @@ jQuery(document).ready(function($) {
         } else {
             $serpThumb.hide();
         }
+
+        updateSocialPreview(displayTitle, descVal, thumbUrl);
 
         if (hasFeaturedImage) {
             resultsHTML += '<li style="color:green;">✅ Post has a featured image set.</li>';
@@ -173,6 +191,7 @@ jQuery(document).ready(function($) {
     $desc.on('input', analyzeSEO);
     $keyword.on('input', analyzeSEO);
     $('#title').on('input', analyzeSEO); // Default WP title
+    $('#eseo_social_title, #eseo_social_description, #eseo_social_image').on('input', analyzeSEO);
 
     // SERP Preview: Desktop / Mobile Toggle
     $('#eseo-serp-desktop-btn').on('click', function() {
@@ -276,4 +295,107 @@ jQuery(document).ready(function($) {
 
     // Initial analysis
     setTimeout(analyzeSEO, 1000);
+
+    // LSI Keywords Suggestion
+    $('.eseo-lsi-btn').on('click', function(e) {
+        e.preventDefault();
+        const $btn = $(this);
+        const keyword = $keyword.val() ? $keyword.val().trim() : $('#title').val() || '';
+        if (!keyword) {
+            alert('Please enter a focus keyword or post title first.');
+            return;
+        }
+        $btn.text('⏳ Suggesting...').prop('disabled', true);
+        const postId = $('#post_ID').val() || 0;
+        $.ajax({
+            url: eseo_vars.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'eseo_suggest_lsi',
+                nonce: eseo_vars.ai_nonce,
+                post_id: postId,
+                keyword: keyword
+            },
+            success: function(response) {
+                if (response.success && response.data) {
+                    let html = '<div style="font-size:12px; font-weight:bold; color:#1d2327; margin-bottom:4px;">Suggested LSI / Semantic Keywords (Click to copy):</div><div style="display:flex; flex-wrap:wrap; gap:5px;">';
+                    response.data.forEach(function(term) {
+                        html += '<span class="eseo-lsi-tag" style="background:#e0f2fe; color:#0369a1; padding:3px 8px; border-radius:12px; font-size:12px; cursor:pointer;" title="Click to copy">' + term + '</span>';
+                    });
+                    html += '</div>';
+                    $('#eseo-lsi-results').html(html).show();
+                } else {
+                    alert('Could not suggest LSI keywords: ' + (response.data && response.data.message ? response.data.message : 'No results'));
+                }
+            },
+            error: function() { alert('AJAX failed'); },
+            complete: function() { $btn.text('🤖 Suggest LSI Keywords').prop('disabled', false); }
+        });
+    });
+
+    $(document).on('click', '.eseo-lsi-tag', function() {
+        const text = $(this).text();
+        navigator.clipboard.writeText(text);
+        const originalBg = $(this).css('background');
+        $(this).css('background', '#bbf7d0').text('✓ Copied!');
+        setTimeout(() => { $(this).css('background', '#e0f2fe').text(text); }, 1200);
+    });
+
+    // Internal Link Opportunities Scan
+    $('#eseo-find-links-btn').on('click', function(e) {
+        e.preventDefault();
+        const $btn = $(this);
+        const keyword = $keyword.val() ? $keyword.val().trim() : $('#title').val() || '';
+        const postId = $('#post_ID').val() || 0;
+        $btn.text('⏳ Scanning site...').prop('disabled', true);
+        $.ajax({
+            url: eseo_vars.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'eseo_get_link_suggestions',
+                nonce: eseo_vars.ai_nonce,
+                post_id: postId,
+                keyword: keyword
+            },
+            success: function(response) {
+                if (response.success && response.data && response.data.length) {
+                    let html = '<div style="font-weight:bold; color:#1d2327;">Found ' + response.data.length + ' related articles to link to:</div>';
+                    response.data.forEach(function(item) {
+                        html += '<div style="border:1px solid #ccd0d4; padding:10px; border-radius:6px; background:#fff; display:flex; justify-content:space-between; align-items:center;">' +
+                            '<div><a href="' + item.url + '" target="_blank" style="font-weight:600;">' + item.title + '</a><br><small style="color:#666;">' + item.url + '</small></div>' +
+                            '<button type="button" class="button button-small eseo-copy-link-btn" data-anchor="&lt;a href=&quot;' + item.url + '&quot;&gt;' + (keyword || item.title) + '&lt;/a&gt;">📋 Copy HTML</button>' +
+                        '</div>';
+                    });
+                    $('#eseo-links-results').html(html);
+                } else {
+                    $('#eseo-links-results').html('<p style="color:#666; font-style:italic;">No related articles found matching this topic.</p>');
+                }
+            },
+            error: function() { alert('AJAX failed'); },
+            complete: function() { $btn.text('🔍 Scan For Internal Link Opportunities').prop('disabled', false); }
+        });
+    });
+
+    $(document).on('click', '.eseo-copy-link-btn', function() {
+        const anchor = $(this).data('anchor');
+        navigator.clipboard.writeText(anchor);
+        $(this).text('✓ Copied HTML!');
+        setTimeout(() => { $(this).text('📋 Copy HTML'); }, 1500);
+    });
+
+    // Dark Mode Toggle Check
+    if (localStorage.getItem('eseo_dark_mode') === '1') {
+        $('body').addClass('eseo-dark-mode');
+    }
+
+    $(document).on('click', '#eseo-dark-mode-toggle', function(e) {
+        e.preventDefault();
+        if ($('body').hasClass('eseo-dark-mode')) {
+            $('body').removeClass('eseo-dark-mode');
+            localStorage.setItem('eseo_dark_mode', '0');
+        } else {
+            $('body').addClass('eseo-dark-mode');
+            localStorage.setItem('eseo_dark_mode', '1');
+        }
+    });
 });

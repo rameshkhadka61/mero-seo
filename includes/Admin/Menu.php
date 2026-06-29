@@ -32,10 +32,19 @@ class Menu {
     }
 
     public function register_admin_menu() {
+        $plugin_name = get_option( 'eseo_white_label_name', 'Mero SEO' );
+        if ( empty( trim( $plugin_name ) ) ) {
+            $plugin_name = 'Mero SEO';
+        }
+        $cap = get_option( 'eseo_access_role', 'manage_options' );
+        if ( ! in_array( $cap, [ 'manage_options', 'edit_others_posts', 'edit_posts' ], true ) ) {
+            $cap = 'manage_options';
+        }
+
         add_menu_page(
-            'Mero SEO',
-            'Mero SEO',
-            'manage_options',
+            $plugin_name,
+            $plugin_name,
+            $cap,
             'mero-seo',
             [ $this, 'render_dashboard' ],
             'dashicons-chart-line',
@@ -46,7 +55,7 @@ class Menu {
             'mero-seo',
             'Dashboard',
             'Dashboard',
-            'manage_options',
+            $cap,
             'mero-seo',
             [ $this, 'render_dashboard' ]
         );
@@ -55,7 +64,7 @@ class Menu {
             'mero-seo',
             'AI Settings',
             'AI Settings',
-            'manage_options',
+            $cap,
             'eseo-ai-settings',
             [ $this, 'render_ai_settings' ]
         );
@@ -64,7 +73,7 @@ class Menu {
             'mero-seo',
             'Indexing API',
             'Indexing API',
-            'manage_options',
+            $cap,
             'eseo-indexing-settings',
             [ $this, 'render_indexing_settings' ]
         );
@@ -74,7 +83,7 @@ class Menu {
             'mero-seo',
             'Tools & Migration',
             'Tools & Migration',
-            'manage_options',
+            $cap,
             'eseo-tools',
             [ $migration_module, 'render_tools_page' ]
         );
@@ -84,7 +93,7 @@ class Menu {
             'mero-seo',
             'Search Console',
             'Search Console',
-            'manage_options',
+            $cap,
             'eseo-analytics',
             [ $analytics_module, 'render_settings_page' ]
         );
@@ -94,7 +103,7 @@ class Menu {
             'mero-seo',
             'Search Appearance',
             'Search Appearance',
-            'manage_options',
+            $cap,
             'eseo-titles-meta',
             [ $titles_settings, 'render_settings_page' ]
         );
@@ -104,9 +113,19 @@ class Menu {
             'mero-seo',
             'Schema Settings',
             'Schema Settings',
-            'manage_options',
+            $cap,
             'eseo-schema',
             [ $schema_settings, 'render_settings_page' ]
+        );
+
+        $redirects_module = new \ESEO\Modules\Redirects\Redirects();
+        add_submenu_page(
+            'mero-seo',
+            'Redirects & 404s',
+            'Redirects & 404s',
+            $cap,
+            'eseo-redirects',
+            [ $redirects_module, 'render_settings_page' ]
         );
     }
 
@@ -116,6 +135,8 @@ class Menu {
         register_setting( 'eseo_ai_options', 'eseo_gemini_key' );
         register_setting( 'eseo_ai_options', 'eseo_ai_model_v2' );
         register_setting( 'eseo_ai_options', 'eseo_preferred_ai_engine' );
+        register_setting( 'eseo_ai_options', 'eseo_white_label_name' );
+        register_setting( 'eseo_ai_options', 'eseo_access_role' );
         register_setting( 'eseo_ai_options', 'eseo_modules_disabled', [
             'type' => 'array',
             'default' => []
@@ -874,6 +895,30 @@ class Menu {
                         echo '</tr>';
                     }
                     ?>
+                </table>
+
+                <h2>🏢 Agency White-Labeling & Access Control</h2>
+                <p>Customize the menu branding and restrict access permissions for client dashboards.</p>
+                <table class="form-table">
+                    <tr valign="top">
+                        <th scope="row">White-Label Plugin Name</th>
+                        <td>
+                            <input type="text" name="eseo_white_label_name" value="<?php echo esc_attr( get_option('eseo_white_label_name', 'Mero SEO') ); ?>" class="regular-text" placeholder="e.g. Agency SEO Suite" />
+                            <p class="description">Overrides the default "Mero SEO" branding across the WordPress sidebar.</p>
+                        </td>
+                    </tr>
+                    <tr valign="top">
+                        <th scope="row">Minimum Role Access (RBAC)</th>
+                        <td>
+                            <?php $role = get_option('eseo_access_role', 'manage_options'); ?>
+                            <select name="eseo_access_role">
+                                <option value="manage_options" <?php selected($role, 'manage_options'); ?>>Administrators Only (manage_options)</option>
+                                <option value="edit_others_posts" <?php selected($role, 'edit_others_posts'); ?>>Editors & Administrators (edit_others_posts)</option>
+                                <option value="edit_posts" <?php selected($role, 'edit_posts'); ?>>Authors, Editors & Administrators (edit_posts)</option>
+                            </select>
+                            <p class="description">Select which user roles are permitted to access and manage SEO settings.</p>
+                        </td>
+                    </tr>
                 </table>
                 <?php submit_button(); ?>
             </form>

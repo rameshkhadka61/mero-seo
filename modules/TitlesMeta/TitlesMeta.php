@@ -60,6 +60,7 @@ class TitlesMeta {
         register_meta( 'post', '_eseo_social_title', $meta_args );
         register_meta( 'post', '_eseo_social_description', $meta_args );
         register_meta( 'post', '_eseo_social_image', $meta_args );
+        register_meta( 'post', '_eseo_faq_schema', $meta_args );
     }
 
     public function register_column_hooks() {
@@ -137,113 +138,230 @@ class TitlesMeta {
         $social_desc = get_post_meta( $post->ID, '_eseo_social_description', true );
         $social_img = get_post_meta( $post->ID, '_eseo_social_image', true );
 
-        ?>
-        <div class="eseo-meta-box-container" style="display:flex; flex-direction:column; gap:15px;">
-            <div class="eseo-field">
-                <label for="eseo_focus_keyword"><strong>Focus Keyword</strong></label>
-                <button type="button" class="button button-secondary eseo-ai-btn" data-type="keyword" style="margin-left: 10px;">✨ Suggest Keyword</button>
-                <br>
-                <input type="text" id="eseo_focus_keyword" name="eseo_focus_keyword" value="<?php echo esc_attr( $keyword ); ?>" style="width:100%; margin-top: 5px;" />
-            </div>
-            <div class="eseo-field">
-                <label for="eseo_meta_title"><strong>SEO Title</strong></label>
-                <button type="button" class="button button-secondary eseo-ai-btn" data-type="title" style="margin-left: 10px;">✨ Generate with AI</button>
-                <br>
-                <input type="text" id="eseo_meta_title" name="eseo_meta_title" value="<?php echo esc_attr( $title ); ?>" style="width:100%; margin-top: 5px;" placeholder="%title% - %sitename%" />
-                <p class="description">Variables available: %title%, %sitename%, %date%, %currentyear%</p>
-            </div>
-            <div class="eseo-field">
-                <label for="eseo_meta_description"><strong>Meta Description</strong></label>
-                <button type="button" class="button button-secondary eseo-ai-btn" data-type="description" style="margin-left: 10px;">✨ Generate with AI</button>
-                <br>
-                <textarea id="eseo_meta_description" name="eseo_meta_description" rows="3" style="width:100%; margin-top: 5px;"><?php echo esc_textarea( $desc ); ?></textarea>
-            </div>
-            
-            <div class="eseo-field">
-                <label><strong>Real-Time SEO Analysis</strong></label>
-                <ul id="eseo-analysis-results" style="background:#f8f9fa; padding:15px; border-radius:4px; border:1px solid #ccd0d4; margin-top:5px;">
-                    <li>⏳ Analyzing...</li>
-                </ul>
-            </div>
+        $faq_schema = get_post_meta( $post->ID, '_eseo_faq_schema', true );
 
-            <!-- SERP Preview Block -->
-            <div class="eseo-field">
-                <label><strong>Google Search Preview</strong></label>
-                <div class="eseo-serp-toggle-bar">
-                    <button type="button" class="eseo-serp-toggle-btn active" id="eseo-serp-desktop-btn">🖥️ Desktop</button>
-                    <button type="button" class="eseo-serp-toggle-btn" id="eseo-serp-mobile-btn">📱 Mobile</button>
+        ?>
+        <div class="eseo-tabs-nav" style="display:flex; border-bottom:1px solid #ccd0d4; margin-bottom:15px; gap:5px;">
+            <button type="button" class="eseo-tab-btn active" data-tab="general" style="padding:10px 15px; border:1px solid #ccd0d4; border-bottom:none; background:#fff; font-weight:600; cursor:pointer;">🔍 General & SERP</button>
+            <button type="button" class="eseo-tab-btn" data-tab="social" style="padding:10px 15px; border:1px solid transparent; background:#f0f0f1; cursor:pointer;">🌐 Social Previews</button>
+            <button type="button" class="eseo-tab-btn" data-tab="faq" style="padding:10px 15px; border:1px solid transparent; background:#f0f0f1; cursor:pointer;">⚡ FAQ Builder</button>
+            <button type="button" class="eseo-tab-btn" data-tab="links" style="padding:10px 15px; border:1px solid transparent; background:#f0f0f1; cursor:pointer;">🔗 Internal Links</button>
+        </div>
+
+        <div class="eseo-meta-box-container">
+            <!-- TAB 1: GENERAL & SERP -->
+            <div class="eseo-tab-content eseo-tab-general" style="display:flex; flex-direction:column; gap:15px;">
+                <div class="eseo-field">
+                    <label for="eseo_focus_keyword"><strong>Focus Keyword</strong></label>
+                    <button type="button" class="button button-secondary eseo-ai-btn" data-type="keyword" style="margin-left: 10px;">✨ Suggest Keyword</button>
+                    <button type="button" class="button button-secondary eseo-lsi-btn" style="margin-left: 5px;">🤖 Suggest LSI Keywords</button>
+                    <br>
+                    <input type="text" id="eseo_focus_keyword" name="eseo_focus_keyword" value="<?php echo esc_attr( $keyword ); ?>" style="width:100%; margin-top: 5px;" />
+                    <div id="eseo-lsi-results" style="margin-top:8px; display:none;"></div>
                 </div>
-                <div class="eseo-serp-preview" id="eseo-serp-preview-box">
-                    <div class="eseo-serp-thumb" id="eseo-serp-thumb-preview" style="display:none;"></div>
-                    <div class="eseo-serp-content-wrapper">
-                        <div class="eseo-serp-url" id="eseo-serp-url-preview"><?php echo esc_url( get_site_url() ); ?>/your-post-url/</div>
-                        <div class="eseo-serp-title" id="eseo-serp-title-preview">Your Post Title Here - <?php echo esc_html( get_bloginfo('name') ); ?></div>
-                        <div class="eseo-serp-desc" id="eseo-serp-desc-preview">Please provide a meta description. If you don't, Google will try to find a relevant part of your post to show in the search results.</div>
+                <div class="eseo-field">
+                    <label for="eseo_meta_title"><strong>SEO Title</strong></label>
+                    <button type="button" class="button button-secondary eseo-ai-btn" data-type="title" style="margin-left: 10px;">✨ Generate with AI</button>
+                    <br>
+                    <input type="text" id="eseo_meta_title" name="eseo_meta_title" value="<?php echo esc_attr( $title ); ?>" style="width:100%; margin-top: 5px;" placeholder="%title% - %sitename%" />
+                    <p class="description">Variables available: %title%, %sitename%, %date%, %currentyear%</p>
+                </div>
+                <div class="eseo-field">
+                    <label for="eseo_meta_description"><strong>Meta Description</strong></label>
+                    <button type="button" class="button button-secondary eseo-ai-btn" data-type="description" style="margin-left: 10px;">✨ Generate with AI</button>
+                    <br>
+                    <textarea id="eseo_meta_description" name="eseo_meta_description" rows="3" style="width:100%; margin-top: 5px;"><?php echo esc_textarea( $desc ); ?></textarea>
+                </div>
+                
+                <div class="eseo-field">
+                    <label><strong>Real-Time SEO Analysis</strong></label>
+                    <ul id="eseo-analysis-results" style="background:#f8f9fa; padding:15px; border-radius:4px; border:1px solid #ccd0d4; margin-top:5px;">
+                        <li>⏳ Analyzing...</li>
+                    </ul>
+                </div>
+
+                <!-- SERP Preview Block -->
+                <div class="eseo-field">
+                    <label><strong>Google Search Preview</strong></label>
+                    <div class="eseo-serp-toggle-bar">
+                        <button type="button" class="eseo-serp-toggle-btn active" id="eseo-serp-desktop-btn">🖥️ Desktop</button>
+                        <button type="button" class="eseo-serp-toggle-btn" id="eseo-serp-mobile-btn">📱 Mobile</button>
+                    </div>
+                    <div class="eseo-serp-preview" id="eseo-serp-preview-box">
+                        <div class="eseo-serp-thumb" id="eseo-serp-thumb-preview" style="display:none;"></div>
+                        <div class="eseo-serp-content-wrapper">
+                            <div class="eseo-serp-url" id="eseo-serp-url-preview"><?php echo esc_url( get_site_url() ); ?>/your-post-url/</div>
+                            <div class="eseo-serp-title" id="eseo-serp-title-preview">Your Post Title Here - <?php echo esc_html( get_bloginfo('name') ); ?></div>
+                            <div class="eseo-serp-desc" id="eseo-serp-desc-preview">Please provide a meta description. If you don't, Google will try to find a relevant part of your post to show in the search results.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <hr style="margin: 15px 0; border: 0; border-top: 1px solid #ccd0d4;">
+                
+                <div class="eseo-field">
+                    <h3 style="margin-top: 0;">Advanced SEO</h3>
+                    <label for="eseo_canonical_url"><strong>Canonical URL</strong></label>
+                    <br>
+                    <input type="url" id="eseo_canonical_url" name="eseo_canonical_url" value="<?php echo esc_attr( $canonical ); ?>" style="width:100%; margin-top: 5px;" placeholder="Leave empty to use default permalink" />
+                </div>
+
+                <div class="eseo-field" style="display:flex; gap:20px; margin-top: 10px;">
+                    <div style="flex:1;">
+                        <label for="eseo_meta_robots_index"><strong>Meta Robots Index</strong></label>
+                        <select id="eseo_meta_robots_index" name="eseo_meta_robots_index" style="width:100%; margin-top: 5px;">
+                            <option value="default" <?php selected($robots_index, 'default'); ?>>Default (Index)</option>
+                            <option value="noindex" <?php selected($robots_index, 'noindex'); ?>>NoIndex</option>
+                            <option value="index" <?php selected($robots_index, 'index'); ?>>Index</option>
+                        </select>
+                    </div>
+                    <div style="flex:1;">
+                        <label for="eseo_meta_robots_follow"><strong>Meta Robots Follow</strong></label>
+                        <select id="eseo_meta_robots_follow" name="eseo_meta_robots_follow" style="width:100%; margin-top: 5px;">
+                            <option value="default" <?php selected($robots_follow, 'default'); ?>>Default (Follow)</option>
+                            <option value="nofollow" <?php selected($robots_follow, 'nofollow'); ?>>NoFollow</option>
+                            <option value="follow" <?php selected($robots_follow, 'follow'); ?>>Follow</option>
+                        </select>
                     </div>
                 </div>
             </div>
 
-            <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ccd0d4;">
-            
-            <div class="eseo-field">
-                <h3 style="margin-top: 0;">Advanced SEO</h3>
-                <label for="eseo_canonical_url"><strong>Canonical URL</strong></label>
-                <br>
-                <input type="url" id="eseo_canonical_url" name="eseo_canonical_url" value="<?php echo esc_attr( $canonical ); ?>" style="width:100%; margin-top: 5px;" placeholder="Leave empty to use default permalink" />
-            </div>
-
-            <div class="eseo-field" style="display:flex; gap:20px; margin-top: 10px;">
-                <div style="flex:1;">
-                    <label for="eseo_meta_robots_index"><strong>Meta Robots Index</strong></label>
-                    <select id="eseo_meta_robots_index" name="eseo_meta_robots_index" style="width:100%; margin-top: 5px;">
-                        <option value="default" <?php selected($robots_index, 'default'); ?>>Default (Index)</option>
-                        <option value="noindex" <?php selected($robots_index, 'noindex'); ?>>NoIndex</option>
-                        <option value="index" <?php selected($robots_index, 'index'); ?>>Index</option>
-                    </select>
+            <!-- TAB 2: SOCIAL PREVIEWS -->
+            <div class="eseo-tab-content eseo-tab-social" style="display:none; flex-direction:column; gap:15px;">
+                <div class="eseo-field">
+                    <label for="eseo_social_title"><strong>Social Share Title</strong></label>
+                    <input type="text" id="eseo_social_title" name="eseo_social_title" value="<?php echo esc_attr( $social_title ); ?>" style="width:100%; margin-top: 5px;" placeholder="Leave blank to use SEO Title" />
                 </div>
-                <div style="flex:1;">
-                    <label for="eseo_meta_robots_follow"><strong>Meta Robots Follow</strong></label>
-                    <select id="eseo_meta_robots_follow" name="eseo_meta_robots_follow" style="width:100%; margin-top: 5px;">
-                        <option value="default" <?php selected($robots_follow, 'default'); ?>>Default (Follow)</option>
-                        <option value="nofollow" <?php selected($robots_follow, 'nofollow'); ?>>NoFollow</option>
-                        <option value="follow" <?php selected($robots_follow, 'follow'); ?>>Follow</option>
-                    </select>
+
+                <div class="eseo-field">
+                    <label for="eseo_social_description"><strong>Social Share Description</strong></label>
+                    <textarea id="eseo_social_description" name="eseo_social_description" rows="2" style="width:100%; margin-top: 5px;" placeholder="Leave blank to use Meta Description"><?php echo esc_textarea( $social_desc ); ?></textarea>
+                </div>
+
+                <div class="eseo-field">
+                    <label for="eseo_social_image"><strong>Custom Social Image URL</strong></label>
+                    <div style="display:flex; gap:10px; margin-top:5px;">
+                        <input type="url" id="eseo_social_image" name="eseo_social_image" value="<?php echo esc_attr( $social_img ); ?>" style="flex:1;" placeholder="https://... (1200x630 recommended for rich WhatsApp/Facebook cards)" />
+                        <button type="button" class="button button-secondary eseo-upload-social-img">📁 Upload / Choose</button>
+                    </div>
+                </div>
+
+                <hr style="margin: 15px 0; border: 0; border-top: 1px solid #ccd0d4;">
+
+                <div class="eseo-field">
+                    <label><strong>Live Facebook / WhatsApp Share Card Preview</strong></label>
+                    <div class="eseo-fb-preview" style="border:1px solid #dadde1; border-radius:8px; overflow:hidden; max-width:500px; background:#f0f2f5; margin-top:8px;">
+                        <div class="eseo-fb-img" id="eseo-fb-img-preview" style="height:260px; background:#e4e6eb; background-size:cover; background-position:center; display:flex; align-items:center; justify-content:center; color:#8d949e; font-weight:bold;">No Image Selected</div>
+                        <div style="padding:12px; background:#fff; border-top:1px solid #dadde1;">
+                            <div style="font-size:12px; text-transform:uppercase; color:#606770;" id="eseo-fb-domain-preview"><?php echo esc_html( parse_url( get_site_url(), PHP_URL_HOST ) ); ?></div>
+                            <div style="font-size:16px; font-weight:bold; color:#1d2129; margin:4px 0;" id="eseo-fb-title-preview">Your Post Title</div>
+                            <div style="font-size:14px; color:#606770; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;" id="eseo-fb-desc-preview">Your post description preview will appear here.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="eseo-field" style="margin-top:10px;">
+                    <label><strong>Live X (Twitter) Card Preview</strong></label>
+                    <div class="eseo-tw-preview" style="border:1px solid #cfd9de; border-radius:16px; overflow:hidden; max-width:500px; background:#fff; margin-top:8px;">
+                        <div class="eseo-tw-img" id="eseo-tw-img-preview" style="height:260px; background:#f7f9f9; background-size:cover; background-position:center; display:flex; align-items:center; justify-content:center; color:#536471; font-weight:bold;">No Image Selected</div>
+                        <div style="padding:12px;">
+                            <div style="font-size:15px; font-weight:bold; color:#0f1419; margin-bottom:2px;" id="eseo-tw-title-preview">Your Post Title</div>
+                            <div style="font-size:14px; color:#536471;" id="eseo-tw-desc-preview">Your post description preview will appear here.</div>
+                            <div style="font-size:14px; color:#536471; margin-top:4px;" id="eseo-tw-domain-preview">🔗 <?php echo esc_html( parse_url( get_site_url(), PHP_URL_HOST ) ); ?></div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ccd0d4;">
-
-            <div class="eseo-field">
-                <h3 style="margin-top: 0;">🌐 Social Media Optimization (OpenGraph & Twitter Cards)</h3>
-                <label for="eseo_social_title"><strong>Social Share Title</strong></label>
-                <input type="text" id="eseo_social_title" name="eseo_social_title" value="<?php echo esc_attr( $social_title ); ?>" style="width:100%; margin-top: 5px;" placeholder="Leave blank to use SEO Title" />
+            <!-- TAB 3: FAQ BUILDER -->
+            <div class="eseo-tab-content eseo-tab-faq" style="display:none; flex-direction:column; gap:15px;">
+                <div>
+                    <p class="description">Add FAQ Question and Answer pairs below. Mero SEO will automatically inject verified Google <code>FAQPage</code> rich snippet schema into your post header.</p>
+                    <input type="hidden" id="eseo_faq_schema" name="eseo_faq_schema" value="<?php echo esc_attr( $faq_schema ); ?>" />
+                    <div id="eseo-faq-items-list" style="display:flex; flex-direction:column; gap:10px; margin-top:10px;"></div>
+                    <button type="button" class="button button-primary" id="eseo-add-faq-item-btn" style="margin-top:15px;">+ Add FAQ Question</button>
+                </div>
             </div>
 
-            <div class="eseo-field">
-                <label for="eseo_social_description"><strong>Social Share Description</strong></label>
-                <textarea id="eseo_social_description" name="eseo_social_description" rows="2" style="width:100%; margin-top: 5px;" placeholder="Leave blank to use Meta Description"><?php echo esc_textarea( $social_desc ); ?></textarea>
-            </div>
-
-            <div class="eseo-field">
-                <label for="eseo_social_image"><strong>Custom Social Image URL</strong></label>
-                <div style="display:flex; gap:10px; margin-top:5px;">
-                    <input type="url" id="eseo_social_image" name="eseo_social_image" value="<?php echo esc_attr( $social_img ); ?>" style="flex:1;" placeholder="https://... (1200x630 recommended for rich WhatsApp/Facebook cards)" />
-                    <button type="button" class="button button-secondary eseo-upload-social-img">📁 Upload / Choose</button>
+            <!-- TAB 4: INTERNAL LINKS -->
+            <div class="eseo-tab-content eseo-tab-links" style="display:none; flex-direction:column; gap:15px;">
+                <div>
+                    <p class="description">Find relevant internal linking opportunities on your site to boost SEO authority and avoid orphan content.</p>
+                    <button type="button" class="button button-primary" id="eseo-find-links-btn">🔍 Scan For Internal Link Opportunities</button>
+                    <div id="eseo-links-results" style="margin-top:15px; display:flex; flex-direction:column; gap:10px;"></div>
                 </div>
             </div>
 
         </div>
         <script>
         jQuery(document).ready(function($){
+            // Tabs switching
+            $('.eseo-tab-btn').on('click', function(e){
+                e.preventDefault();
+                $('.eseo-tab-btn').removeClass('active').css({background:'#f0f0f1', borderColor:'transparent'});
+                $(this).addClass('active').css({background:'#fff', borderColor:'#ccd0d4', borderBottomColor:'transparent'});
+                var tab = $(this).data('tab');
+                $('.eseo-tab-content').hide();
+                $('.eseo-tab-' + tab).css('display', 'flex');
+            });
+
+            // Media uploader
             $('.eseo-upload-social-img').on('click', function(e){
                 e.preventDefault();
                 var frame = wp.media({ title: 'Select Social Share Image', multiple: false, library: { type: 'image' } });
                 frame.on('select', function(){
                     var attachment = frame.state().get('selection').first().toJSON();
-                    $('#eseo_social_image').val(attachment.url);
+                    $('#eseo_social_image').val(attachment.url).trigger('input');
                 });
                 frame.open();
             });
+
+            // FAQ Builder JS
+            var faqData = [];
+            try {
+                var val = $('#eseo_faq_schema').val();
+                if(val) faqData = JSON.parse(val);
+            } catch(err){}
+
+            function renderFaqs() {
+                var $list = $('#eseo-faq-items-list');
+                $list.empty();
+                if(!faqData.length) {
+                    $list.html('<p style="color:#666; font-style:italic;">No FAQs added yet.</p>');
+                    return;
+                }
+                faqData.forEach(function(item, idx){
+                    var html = '<div class="eseo-faq-item" style="border:1px solid #ccd0d4; padding:12px; border-radius:6px; background:#f8f9fa; position:relative;">' +
+                        '<label><strong>Question ' + (idx+1) + '</strong></label><button type="button" class="button button-link-delete eseo-remove-faq" data-idx="'+idx+'" style="position:absolute; right:10px; top:10px; color:#b32d2e;">Remove</button>' +
+                        '<input type="text" class="eseo-faq-q" data-idx="'+idx+'" value="'+ (item.q||'').replace(/"/g, '&quot;') +'" style="width:100%; margin:5px 0 10px;" placeholder="e.g. How do I listen live?" />' +
+                        '<label><strong>Answer</strong></label>' +
+                        '<textarea class="eseo-faq-a" data-idx="'+idx+'" rows="2" style="width:100%; margin-top:5px;" placeholder="e.g. Click the play button at the top of our website.">'+ (item.a||'') +'</textarea>' +
+                    '</div>';
+                    $list.append(html);
+                });
+            }
+
+            $('#eseo-add-faq-item-btn').on('click', function(){
+                faqData.push({q:'', a:''});
+                $('#eseo_faq_schema').val(JSON.stringify(faqData));
+                renderFaqs();
+            });
+
+            $(document).on('input', '.eseo-faq-q, .eseo-faq-a', function(){
+                var idx = $(this).data('idx');
+                if($(this).hasClass('eseo-faq-q')) faqData[idx].q = $(this).val();
+                if($(this).hasClass('eseo-faq-a')) faqData[idx].a = $(this).val();
+                $('#eseo_faq_schema').val(JSON.stringify(faqData));
+            });
+
+            $(document).on('click', '.eseo-remove-faq', function(){
+                var idx = $(this).data('idx');
+                faqData.splice(idx, 1);
+                $('#eseo_faq_schema').val(JSON.stringify(faqData));
+                renderFaqs();
+            });
+
+            renderFaqs();
         });
         </script>
         <?php
@@ -292,6 +410,9 @@ class TitlesMeta {
         }
         if ( isset( $_POST['eseo_social_image'] ) ) {
             update_post_meta( $post_id, '_eseo_social_image', sanitize_url( $_POST['eseo_social_image'] ) );
+        }
+        if ( isset( $_POST['eseo_faq_schema'] ) ) {
+            update_post_meta( $post_id, '_eseo_faq_schema', wp_unslash( $_POST['eseo_faq_schema'] ) );
         }
     }
 
