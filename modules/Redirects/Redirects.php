@@ -44,7 +44,7 @@ class Redirects {
             return;
         }
 
-        this->ensure_tables();
+        $this->ensure_tables();
         global $wpdb;
         $table_name = $wpdb->prefix . 'eseo_redirects';
 
@@ -71,7 +71,7 @@ class Redirects {
             return;
         }
 
-        this->ensure_tables();
+        $this->ensure_tables();
         global $wpdb;
         $table_name = $wpdb->prefix . 'eseo_redirects';
         $table_404  = $wpdb->prefix . 'eseo_404_logs';
@@ -124,7 +124,7 @@ class Redirects {
             return;
         }
         if ( isset( $_POST['eseo_add_redirect'] ) && check_admin_referer( 'eseo_redirects_action' ) ) {
-            this->ensure_tables();
+            $this->ensure_tables();
             global $wpdb;
             $table_name = $wpdb->prefix . 'eseo_redirects';
             $from = ltrim( sanitize_text_field( $_POST['url_from'] ), '/' );
@@ -164,7 +164,7 @@ class Redirects {
     }
 
     public function render_settings_page() {
-        this->ensure_tables();
+        $this->ensure_tables();
         global $wpdb;
         $table_redirects = $wpdb->prefix . 'eseo_redirects';
         $table_404 = $wpdb->prefix . 'eseo_404_logs';
