@@ -64,7 +64,12 @@ jQuery(document).ready(function($) {
         $('#eseo-fb-desc-preview, #eseo-tw-desc-preview').text(socDesc);
 
         if (socImg) {
-            $('#eseo-fb-img-preview, #eseo-tw-img-preview').css('background-image', 'url(' + socImg + ')').text('');
+            $('#eseo-fb-img-preview, #eseo-tw-img-preview').css({
+                'background-image': 'url(' + socImg + ')',
+                'background-size': 'contain',
+                'background-position': 'center center',
+                'background-repeat': 'no-repeat'
+            }).text('');
         } else {
             $('#eseo-fb-img-preview, #eseo-tw-img-preview').css('background-image', 'none').text('No Image Selected');
         }
@@ -128,7 +133,12 @@ jQuery(document).ready(function($) {
         }
 
         if (hasFeaturedImage && thumbUrl) {
-            $serpThumb.css('background-image', 'url(' + thumbUrl + ')').show();
+            $serpThumb.css({
+                'background-image': 'url(' + thumbUrl + ')',
+                'background-size': 'contain',
+                'background-position': 'center center',
+                'background-repeat': 'no-repeat'
+            }).show();
         } else if (hasFeaturedImage) {
             $serpThumb.css('background-image', 'none').show();
         } else {

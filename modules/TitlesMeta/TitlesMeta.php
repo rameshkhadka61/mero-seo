@@ -424,7 +424,7 @@ class TitlesMeta {
             if ( isset( $post->post_type ) && in_array( $post->post_type, $public_post_types ) ) {
                 wp_enqueue_media();
                 // Enqueue Premium CSS
-                wp_enqueue_style( 'eseo-admin-css', plugin_dir_url( dirname( __DIR__ ) ) . 'assets/css/admin.css', [], '1.0.0' );
+                wp_enqueue_style( 'eseo-admin-css', plugin_dir_url( dirname( __DIR__ ) ) . 'assets/css/admin.css', [], filemtime( plugin_dir_path( dirname( __DIR__ ) ) . 'assets/css/admin.css' ) );
 
                 wp_enqueue_script( 'eseo-admin-js', plugin_dir_url( dirname( __DIR__ ) ) . 'assets/js/admin.js', [ 'jquery' ], filemtime( plugin_dir_path( dirname( __DIR__ ) ) . 'assets/js/admin.js' ), true );
                 
@@ -436,7 +436,7 @@ class TitlesMeta {
                 ]);
             }
         } elseif ( $hook == 'edit.php' ) {
-            wp_enqueue_style( 'eseo-admin-css', plugin_dir_url( dirname( __DIR__ ) ) . 'assets/css/admin.css', [], '1.0.0' );
+            wp_enqueue_style( 'eseo-admin-css', plugin_dir_url( dirname( __DIR__ ) ) . 'assets/css/admin.css', [], filemtime( plugin_dir_path( dirname( __DIR__ ) ) . 'assets/css/admin.css' ) );
         }
     }
 
