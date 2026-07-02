@@ -77,11 +77,47 @@ class SocialSEO {
         }
 
         if ( ! empty( $image_url ) ) {
+            if ( is_string( $image_url ) ) {
+                $image_url = preg_replace( '/-\d+x\d+(?=\.[a-zA-Z]{3,4}($|\?))/i', '', $image_url );
+            }
+
+            $width  = '';
+            $height = '';
+            $mime   = 'image/jpeg';
+
+            if ( function_exists( 'attachment_url_to_postid' ) ) {
+                $attachment_id = attachment_url_to_postid( $image_url );
+                if ( $attachment_id ) {
+                    $img_meta = wp_get_attachment_image_src( $attachment_id, 'full' );
+                    if ( $img_meta && is_array( $img_meta ) ) {
+                        $width  = $img_meta[1];
+                        $height = $img_meta[2];
+                    }
+                    $post_mime = get_post_mime_type( $attachment_id );
+                    if ( $post_mime ) {
+                        $mime = $post_mime;
+                    }
+                }
+            }
+            if ( empty( $mime ) ) {
+                if ( preg_match( '/\.png($|\?)/i', $image_url ) ) {
+                    $mime = 'image/png';
+                } elseif ( preg_match( '/\.webp($|\?)/i', $image_url ) ) {
+                    $mime = 'image/webp';
+                } elseif ( preg_match( '/\.gif($|\?)/i', $image_url ) ) {
+                    $mime = 'image/gif';
+                }
+            }
+
             echo '<meta property="og:image" content="' . esc_url( $image_url ) . '" />' . "\n";
             echo '<meta property="og:image:secure_url" content="' . esc_url( preg_replace('/^http:/i', 'https:', $image_url) ) . '" />' . "\n";
-            echo '<meta property="og:image:type" content="image/jpeg" />' . "\n";
-            echo '<meta property="og:image:width" content="1200" />' . "\n";
-            echo '<meta property="og:image:height" content="630" />' . "\n";
+            echo '<meta property="og:image:type" content="' . esc_attr( $mime ) . '" />' . "\n";
+            if ( ! empty( $width ) ) {
+                echo '<meta property="og:image:width" content="' . esc_attr( $width ) . '" />' . "\n";
+            }
+            if ( ! empty( $height ) ) {
+                echo '<meta property="og:image:height" content="' . esc_attr( $height ) . '" />' . "\n";
+            }
             echo '<meta property="og:image:alt" content="' . esc_attr( $title ) . '" />' . "\n";
         }
 

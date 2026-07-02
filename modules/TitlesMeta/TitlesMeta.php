@@ -409,7 +409,9 @@ class TitlesMeta {
             update_post_meta( $post_id, '_eseo_social_description', sanitize_textarea_field( $_POST['eseo_social_description'] ) );
         }
         if ( isset( $_POST['eseo_social_image'] ) ) {
-            update_post_meta( $post_id, '_eseo_social_image', sanitize_url( $_POST['eseo_social_image'] ) );
+            $social_image = sanitize_url( $_POST['eseo_social_image'] );
+            $social_image = preg_replace( '/-\d+x\d+(?=\.[a-zA-Z]{3,4}($|\?))/i', '', $social_image );
+            update_post_meta( $post_id, '_eseo_social_image', $social_image );
         }
         if ( isset( $_POST['eseo_faq_schema'] ) ) {
             update_post_meta( $post_id, '_eseo_faq_schema', wp_unslash( $_POST['eseo_faq_schema'] ) );
