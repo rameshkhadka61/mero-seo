@@ -90,8 +90,9 @@ class SocialSEO {
                 if ( $attachment_id ) {
                     $img_meta = wp_get_attachment_image_src( $attachment_id, 'full' );
                     if ( $img_meta && is_array( $img_meta ) ) {
-                        $width  = $img_meta[1];
-                        $height = $img_meta[2];
+                        $image_url = $img_meta[0];
+                        $width     = $img_meta[1];
+                        $height    = $img_meta[2];
                     }
                     $post_mime = get_post_mime_type( $attachment_id );
                     if ( $post_mime ) {
@@ -121,7 +122,14 @@ class SocialSEO {
             echo '<meta property="og:image:alt" content="' . esc_attr( $title ) . '" />' . "\n";
         }
 
-        echo '<meta name="twitter:card" content="summary_large_image" />' . "\n";
+        $twitter_card = 'summary_large_image';
+        if ( ! empty( $width ) && ! empty( $height ) && $height >= ( $width * 0.75 ) ) {
+            $twitter_card = 'summary';
+        } elseif ( $type === 'music.radio_station' ) {
+            $twitter_card = 'summary';
+        }
+
+        echo '<meta name="twitter:card" content="' . esc_attr( $twitter_card ) . '" />' . "\n";
         echo '<meta name="twitter:title" content="' . esc_attr( $title ) . '" />' . "\n";
         echo '<meta name="twitter:description" content="' . esc_attr( $desc ) . '" />' . "\n";
         if ( ! empty( $image_url ) ) {
